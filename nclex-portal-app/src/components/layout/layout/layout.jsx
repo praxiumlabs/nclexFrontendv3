@@ -1,0 +1,224 @@
+// src/components/layout/Layout/Layout.jsx
+import React, { useState } from 'react';
+import { Outlet } from 'react-router-dom';
+import styled, { css } from 'styled-components';
+import { Navigation } from '../Navigation/Navigation';
+import { Sidebar } from '../Sidebar/Sidebar';
+import { Footer } from '../Footer/Footer';
+import { useMediaQuery } from '../../../hooks/useMediaQuery';
+
+// Styled components
+const LayoutContainer = styled.div`
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: ${({ theme }) => theme.colors.background.default};
+`;
+
+const MainWrapper = styled.div`
+  flex: 1;
+  display: flex;
+  position: relative;
+`;
+
+const MainContent = styled.main`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  transition: margin-left ${({ theme }) => theme.transitions.base};
+  
+  ${({ $sidebarOpen, $sidebarCollapsed }) => 
+    $sidebarOpen && css`
+      @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+        margin-left: ${$sidebarCollapsed ? '80px' : '280px'};
+      }
+    `
+  }
+`;
+
+const ContentArea = styled.div`
+  flex: 1;
+  width: 100%;
+  max-width: ${({ $fullWidth }) => $fullWidth ? 'none' : '1280px'};
+  margin: 0 auto;
+  padding: ${({ theme }) => theme.spacing.lg};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    padding: ${({ theme }) => theme.spacing.md};
+  }
+`;
+
+const PageHeader = styled.header`
+  background: ${({ theme }) => theme.colors.background.paper};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
+  padding: ${({ theme }) => `${theme.spacing.lg} ${theme.spacing.xl}`};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    padding: ${({ theme }) => theme.spacing.md};
+  }
+`;
+
+const PageTitle = styled.h1`
+  font-size: ${({ theme }) => theme.fontSize['3xl']};
+  font-weight: ${({ theme }) => theme.fontWeight.bold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    font-size: ${({ theme }) => theme.fontSize['2xl']};
+  }
+`;
+
+const PageDescription = styled.p`
+  font-size: ${({ theme }) => theme.fontSize.lg};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin: ${({ theme }) => `${theme.spacing.sm} 0 0`};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    font-size: ${({ theme }) => theme.fontSize.base};
+  }
+`;
+
+const Breadcrumbs = styled.nav`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.secondary};
+`;
+
+const BreadcrumbItem = styled.span`
+  &:not(:last-child)::after {
+    content: '/';
+    margin-left: ${({ theme }) => theme.spacing.sm};
+    color: ${({ theme }) => theme.colors.text.hint};
+  }
+  
+  a {
+    color: ${({ theme }) => theme.colors.text.secondary};
+    text-decoration: none;
+    transition: color ${({ theme }) => theme.transitions.fast};
+    
+    &:hover {
+      color: ${({ theme }) => theme.colors.primary[600]};
+    }
+  }
+  
+  &:last-child {
+    color: ${({ theme }) => theme.colors.text.primary};
+    font-weight: ${({ theme }) => theme.fontWeight.medium};
+  }
+`;
+
+// Loading bar
+const LoadingBar = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: ${({ theme }) => theme.colors.primary[500]};
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform ${({ theme }) => theme.transitions.slow};
+  z-index: ${({ theme }) => theme.zIndex.fixed};
+  
+  ${({ $loading }) => $loading && css`
+    transform: scaleX(1);
+  `}
+`;
+
+// Layout component
+export const Layout = ({
+  children,
+  showSidebar = true,
+  showFooter = true,
+  fullWidth = false,
+  pageTitle,
+  pageDescription,
+  breadcrumbs,
+  loading = false,
+}) => {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const isMobile = useMediaQuery('(max-width: 1024px)');
+
+  const handleSidebarToggle = () => {
+    if (isMobile) {
+      setSidebarOpen(!sidebarOpen);
+    } else {
+      setSidebarCollapsed(!sidebarCollapsed);
+    }
+  };
+
+  return (
+    <LayoutContainer>
+      <LoadingBar $loading={loading} />
+      <Navigation />
+      
+      <MainWrapper>
+        {showSidebar && (
+          <Sidebar
+            open={sidebarOpen}
+            collapsed={sidebarCollapsed}
+            onToggle={handleSidebarToggle}
+            onClose={() => setSidebarOpen(false)}
+          />
+        )}
+        
+        <MainContent 
+          $sidebarOpen={showSidebar && sidebarOpen} 
+          $sidebarCollapsed={sidebarCollapsed}
+        >
+          {(pageTitle || breadcrumbs) && (
+            <PageHeader>
+              {breadcrumbs && (
+                <Breadcrumbs>
+                  {breadcrumbs.map((crumb, index) => (
+                    <BreadcrumbItem key={index}>
+                      {crumb.link ? (
+                        <a href={crumb.link}>{crumb.label}</a>
+                      ) : (
+                        crumb.label
+                      )}
+                    </BreadcrumbItem>
+                  ))}
+                </Breadcrumbs>
+              )}
+              
+              {pageTitle && <PageTitle>{pageTitle}</PageTitle>}
+              {pageDescription && <PageDescription>{pageDescription}</PageDescription>}
+            </PageHeader>
+          )}
+          
+          <ContentArea $fullWidth={fullWidth}>
+            {children || <Outlet />}
+          </ContentArea>
+          
+          {showFooter && <Footer />}
+        </MainContent>
+      </MainWrapper>
+    </LayoutContainer>
+  );
+};
+
+// Layout variants
+export const DashboardLayout = ({ children, ...props }) => (
+  <Layout showSidebar showFooter {...props}>
+    {children}
+  </Layout>
+);
+
+export const FullScreenLayout = ({ children, ...props }) => (
+  <Layout showSidebar={false} showFooter={false} fullWidth {...props}>
+    {children}
+  </Layout>
+);
+
+export const SimpleLayout = ({ children, ...props }) => (
+  <Layout showSidebar={false} showFooter {...props}>
+    {children}
+  </Layout>
+);
