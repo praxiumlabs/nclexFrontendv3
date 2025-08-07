@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-// Remove the Layout import - it's not needed here
+import { Layout } from '../../components/layout/layout/layout';
 import { Card } from '../../components/common/Card/Card';
 import { Button } from '../../components/common/Button/Button';
 import { Loader } from '../../components/common/Loader/Loader';
@@ -29,9 +29,44 @@ import {
 } from '../../components/dashboard/Charts';
 
 // Styled components
+const DashboardContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xl};
+`;
 
+const WelcomeSection = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: ${({ theme }) => theme.spacing.md};
+  }
+`;
 
-// Add these new styled components for user profile display
+const WelcomeContent = styled.div``;
+
+const WelcomeTitle = styled.h1`
+  font-size: ${({ theme }) => theme.fontSize['3xl']};
+  font-weight: ${({ theme }) => theme.fontWeight.bold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0 0 ${({ theme }) => theme.spacing.xs};
+  
+  span {
+    color: ${({ theme }) => theme.colors.primary[600]};
+  }
+`;
+
+const WelcomeSubtitle = styled.p`
+  font-size: ${({ theme }) => theme.fontSize.lg};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin: 0;
+`;
+
 const UserProfileContainer = styled.div`
   display: flex;
   align-items: center;
@@ -88,43 +123,6 @@ const LogoutButton = styled.button`
     background: ${({ theme }) => theme.colors.gray[100]};
     color: ${({ theme }) => theme.colors.error.main};
   }
-`;
-const DashboardContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xl};
-`;
-
-const WelcomeSection = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
-  
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: ${({ theme }) => theme.spacing.md};
-  }
-`;
-
-const WelcomeContent = styled.div``;
-
-const WelcomeTitle = styled.h1`
-  font-size: ${({ theme }) => theme.fontSize['3xl']};
-  font-weight: ${({ theme }) => theme.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0 0 ${({ theme }) => theme.spacing.xs};
-  
-  span {
-    color: ${({ theme }) => theme.colors.primary[600]};
-  }
-`;
-
-const WelcomeSubtitle = styled.p`
-  font-size: ${({ theme }) => theme.fontSize.lg};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin: 0;
 `;
 
 const QuickActionsGrid = styled.div`
@@ -178,6 +176,7 @@ const QuickActionTitle = styled.h3`
 const QuickActionDescription = styled.p`
   font-size: ${({ theme }) => theme.fontSize.sm};
   color: ${({ theme }) => theme.colors.text.secondary};
+  margin: 0;
 `;
 
 const StatsGrid = styled.div`
@@ -220,125 +219,46 @@ const StatBadge = styled.div`
     'rgba(107, 114, 128, 0.1)'};
   color: ${({ $trend }) => 
     $trend === 'up' ? '#22c55e' : 
-    $trend === 'down' ? '#ef4444' : 
-    '#6b7280'};
+    $trend === 'down' ? '#ef4444' : '#6b7280'};
   border-radius: ${({ theme }) => theme.borderRadius.full};
   font-size: ${({ theme }) => theme.fontSize.xs};
   font-weight: ${({ theme }) => theme.fontWeight.medium};
 `;
 
-const StatMainValue = styled.div`
-  font-size: ${({ theme }) => theme.fontSize['4xl']};
-  font-weight: ${({ theme }) => theme.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.text.primary};
-  line-height: 1;
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
-`;
-
-const StatDescription = styled.p`
-  font-size: ${({ theme }) => theme.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin: 0;
-`;
-
-const SectionHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-`;
-
-const SectionTitle = styled.h2`
+const StatValue = styled.div`
   font-size: ${({ theme }) => theme.fontSize['2xl']};
   font-weight: ${({ theme }) => theme.fontWeight.bold};
   color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0;
+  margin-bottom: ${({ theme }) => theme.spacing.xs};
 `;
 
-const ChartContainer = styled.div`
-  height: 320px;
-  padding: ${({ theme }) => theme.spacing.md};
-`;
-
-const ProgressCard = styled(Card)`
-  position: relative;
-  overflow: visible;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(135deg, 
-      ${({ theme }) => theme.colors.primary[500]} 0%, 
-      ${({ theme }) => theme.colors.primary[600]} 100%);
-    border-radius: ${({ theme }) => theme.borderRadius.lg};
-    z-index: -1;
-    opacity: 0;
-    transition: opacity ${({ theme }) => theme.transitions.base};
-  }
-  
-  &:hover::before {
-    opacity: 0.1;
-  }
-`;
-// Add these styled components to your Dashboard.jsx:
-const UserProfileContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.background.paper};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  border: 1px solid ${({ theme }) => theme.colors.border.light};
-`;
-
-const UserAvatar = styled.div`
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  overflow: hidden;
-  background: ${({ theme }) => theme.colors.primary[500]};
-  
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
-
-const UserDetails = styled.div`
-  flex: 1;
-`;
-
-const UserName = styled.div`
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.text.primary};
-  font-size: ${({ theme }) => theme.fontSize.base};
-`;
-
-const UserEmail = styled.div`
+const StatDescription = styled.div`
   font-size: ${({ theme }) => theme.fontSize.sm};
   color: ${({ theme }) => theme.colors.text.secondary};
-  margin-top: 2px;
 `;
 
-const LogoutButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: ${({ theme }) => theme.spacing.sm};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  transition: all 0.2s ease;
+const ChartsSection = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
   
-  &:hover {
-    background: ${({ theme }) => theme.colors.gray[100]};
-    color: ${({ theme }) => theme.colors.error.main};
+  @media (max-width: ${({ theme }) => theme.breakpoints.lg}) {
+    grid-template-columns: 1fr;
   }
 `;
+
+const ChartCard = styled(Card)`
+  min-height: 400px;
+`;
+
+const SectionTitle = styled.h2`
+  font-size: ${({ theme }) => theme.fontSize.xl};
+  font-weight: ${({ theme }) => theme.fontWeight.bold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0 0 ${({ theme }) => theme.spacing.lg};
+`;
+
 // Dashboard component
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -351,9 +271,9 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   // Animated values
-  const animatedAccuracy = useAnimatedValue(0, overview.overallAccuracy, { duration: 2000 });
-  const animatedQuestions = useAnimatedValue(0, overview.totalQuestionsAnswered, { duration: 1500 });
-  const animatedStreak = useAnimatedValue(0, overview.currentStreak, { duration: 1000 });
+  const animatedAccuracy = useAnimatedValue(0, overview?.overallAccuracy || 0, { duration: 2000 });
+  const animatedQuestions = useAnimatedValue(0, overview?.totalQuestionsAnswered || 0, { duration: 1500 });
+  const animatedStreak = useAnimatedValue(0, overview?.currentStreak || 0, { duration: 1000 });
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -380,23 +300,101 @@ const Dashboard = () => {
     return 'Good evening';
   };
 
-  const Dashboard = () => {
-  const { user, logout } = useAuth();
-  
+  const quickActions = [
+    {
+      id: 'quick-practice',
+      title: 'Quick Practice',
+      description: '10 adaptive questions',
+      icon: Zap,
+      color: '#10b981',
+      action: () => navigate('/app/practice?mode=quick')
+    },
+    {
+      id: 'srs-review',
+      title: 'SRS Review',
+      description: `${overview?.srsCount || 5} questions due`,
+      icon: Brain,
+      color: '#3b82f6',
+      action: () => navigate('/app/srs-review')
+    },
+    {
+      id: 'mock-exam',
+      title: 'Mock Exam',
+      description: 'Full-length test',
+      icon: Target,
+      color: '#8b5cf6',
+      action: () => navigate('/app/mock-exams')
+    },
+    {
+      id: 'study-plan',
+      title: 'Study Plan',
+      description: 'Personalized schedule',
+      icon: Calendar,
+      color: '#f59e0b',
+      action: () => navigate('/app/study-plan')
+    }
+  ];
+
+  const stats = [
+    {
+      title: 'Overall Accuracy',
+      value: `${Math.round(animatedAccuracy)}%`,
+      description: 'Across all subjects',
+      trend: overview?.accuracyTrend || 'up',
+      change: '+2.3%',
+      icon: Target,
+      color: '#22c55e'
+    },
+    {
+      title: 'Questions Answered',
+      value: Math.round(animatedQuestions).toLocaleString(),
+      description: 'Total practice questions',
+      trend: 'up',
+      change: '+12',
+      icon: BookOpen,
+      color: '#3b82f6'
+    },
+    {
+      title: 'Current Streak',
+      value: `${Math.round(animatedStreak)} days`,
+      description: 'Keep it going!',
+      trend: animatedStreak > 0 ? 'up' : 'neutral',
+      change: animatedStreak > 0 ? '+1' : '0',
+      icon: Star,
+      color: '#f59e0b'
+    },
+    {
+      title: 'Study Time',
+      value: `${overview?.weeklyStudyTime || 0}h`,
+      description: 'This week',
+      trend: 'up',
+      change: '+2.5h',
+      icon: Clock,
+      color: '#8b5cf6'
+    }
+  ];
+
+  if (loading) {
+    return <Loader fullScreen text="Loading your dashboard..." />;
+  }
+
   return (
-     <Layout>
+    <Layout>
       <DashboardContainer>
+        {/* Welcome Section */}
         <WelcomeSection>
           <WelcomeContent>
             <WelcomeTitle>
-              Welcome back, <span>{user?.name || 'Student'}</span>! 👋
+              {getGreeting()}, <span>{user?.name || 'Student'}</span>! 👋
             </WelcomeTitle>
             <WelcomeSubtitle>
-              Ready to continue your NCLEX preparation?
+              {overview?.currentStreak > 0 
+                ? `You're on a ${overview.currentStreak} day streak! Keep it up!`
+                : 'Ready to start your study session?'}
             </WelcomeSubtitle>
           </WelcomeContent>
           
-          {/* ✅ ADD: User Profile Display */}
+          {/* User Profile Display */}
           {user && !user.isGuest && (
             <UserProfileContainer>
               <UserAvatar>
@@ -418,209 +416,73 @@ const Dashboard = () => {
             </UserProfileContainer>
           )}
         </WelcomeSection>
-      </DashboardContainer>
-    </Layout>
-  );
-};
 
-  const quickActions = [
-    {
-      id: 'quick-practice',
-      title: 'Quick Practice',
-      description: '10 adaptive questions',
-      icon: Zap,
-      color: '#10b981',
-      action: () => navigate('/app/practice?mode=quick')
-    },
-    {
-      id: 'srs-review',
-      title: 'SRS Review',
-      description: '5 questions due',
-      icon: Brain,
-      color: '#3b82f6',
-      action: () => navigate('/app/srs-review')
-    },
-    {
-      id: 'mock-exam',
-      title: 'Mock Exam',
-      description: 'Full-length test',
-      icon: Target,
-      color: '#8b5cf6',
-      action: () => navigate('/app/mock-exams')
-    }
-  ];
-
-  // If loading, return just the loader (no Layout wrapper)
-  if (loading) {
-    return <Loader fullScreen text="Loading your dashboard..." />;
-  }
-
-  // Return the dashboard content WITHOUT wrapping it in Layout
-  return (
-    <DashboardContainer>
-      {/* Welcome Section */}
-      <WelcomeSection>
-        <WelcomeContent>
-          <WelcomeTitle>
-            {getGreeting()}, <span>Sarah</span>! 👋
-          </WelcomeTitle>
-          <WelcomeSubtitle>
-            {overview.currentStreak > 0 
-              ? `You're on a ${overview.currentStreak} day streak! Keep it up!`
-              : 'Ready to start your study session?'}
-          </WelcomeSubtitle>
-        </WelcomeContent>
-      </WelcomeSection>
-
-      {/* Quick Actions */}
-      <div>
-        <SectionHeader>
-          <SectionTitle>Quick Actions</SectionTitle>
-        </SectionHeader>
-        
+        {/* Quick Actions */}
         <QuickActionsGrid>
           {quickActions.map((action) => {
-            const Icon = action.icon;
+            const IconComponent = action.icon;
             return (
-              <QuickActionCard 
+              <QuickActionCard
                 key={action.id}
-                $color={action.color}
                 onClick={action.action}
-                hoverable
+                $color={action.color}
               >
-                <Card.Content>
-                  <QuickActionIcon $color={action.color}>
-                    <Icon size={24} />
-                  </QuickActionIcon>
-                  <QuickActionTitle>{action.title}</QuickActionTitle>
-                  <QuickActionDescription>{action.description}</QuickActionDescription>
-                </Card.Content>
+                <QuickActionIcon $color={action.color}>
+                  <IconComponent size={24} />
+                </QuickActionIcon>
+                <QuickActionTitle>{action.title}</QuickActionTitle>
+                <QuickActionDescription>{action.description}</QuickActionDescription>
               </QuickActionCard>
             );
           })}
         </QuickActionsGrid>
-      </div>
 
-      {/* Statistics */}
-      <div>
-        <SectionHeader>
-          <SectionTitle>Your Progress</SectionTitle>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            rightIcon={<ChevronRight size={16} />}
-            onClick={() => navigate('/app/progress')}
-          >
-            View Details
-          </Button>
-        </SectionHeader>
-        
+        {/* Stats Grid */}
         <StatsGrid>
-          <StatCard variant="elevated" onClick={() => navigate('/app/progress')}>
-            <Card.Content>
-              <StatHeader>
-                <StatTitle>Overall Accuracy</StatTitle>
-                <StatBadge $trend="up">
-                  <ArrowUpRight size={14} />
-                  +5%
-                </StatBadge>
-              </StatHeader>
-              <StatMainValue>{Math.floor(animatedAccuracy)}%</StatMainValue>
-              <StatDescription>
-                Keep it above 75% to maintain your current level
-              </StatDescription>
-            </Card.Content>
-          </StatCard>
-
-          <StatCard variant="elevated" onClick={() => navigate('/app/progress')}>
-            <Card.Content>
-              <StatHeader>
-                <StatTitle>Questions Answered</StatTitle>
-                <StatBadge $trend="up">
-                  <ArrowUpRight size={14} />
-                  +12%
-                </StatBadge>
-              </StatHeader>
-              <StatMainValue>{Math.floor(animatedQuestions)}</StatMainValue>
-              <StatDescription>
-                {weeklyGoals.questionsTarget - weeklyGoals.questionsCompleted} more to reach weekly goal
-              </StatDescription>
-            </Card.Content>
-          </StatCard>
-
-          <StatCard variant="elevated" onClick={() => navigate('/app/progress')}>
-            <Card.Content>
-              <StatHeader>
-                <StatTitle>Study Streak</StatTitle>
-                <StatBadge $trend={animatedStreak > 0 ? 'up' : 'neutral'}>
-                  {animatedStreak > 0 ? <ArrowUpRight size={14} /> : <Activity size={14} />}
-                  {animatedStreak > 0 ? `${animatedStreak} days` : 'Start today'}
-                </StatBadge>
-              </StatHeader>
-              <StatMainValue>{Math.floor(animatedStreak)} days</StatMainValue>
-              <StatDescription>
-                {animatedStreak > 0 
-                  ? 'Keep studying daily to maintain your streak!'
-                  : 'Complete a session to start your streak'}
-              </StatDescription>
-            </Card.Content>
-          </StatCard>
+          {stats.map((stat, index) => {
+            const IconComponent = stat.icon;
+            return (
+              <StatCard key={index}>
+                <StatHeader>
+                  <StatTitle>{stat.title}</StatTitle>
+                  <StatBadge $trend={stat.trend}>
+                    {stat.trend === 'up' ? (
+                      <ArrowUpRight size={12} />
+                    ) : stat.trend === 'down' ? (
+                      <ArrowDownRight size={12} />
+                    ) : (
+                      <Activity size={12} />
+                    )}
+                    {stat.change}
+                  </StatBadge>
+                </StatHeader>
+                <StatValue>{stat.value}</StatValue>
+                <StatDescription>{stat.description}</StatDescription>
+              </StatCard>
+            );
+          })}
         </StatsGrid>
-      </div>
 
-      {/* Performance Charts */}
-      <StatsGrid>
-        <ProgressCard variant="elevated">
-          <Card.Content>
-            <StatHeader>
-              <StatTitle>Weekly Activity</StatTitle>
-              <StatBadge $trend="up">
-                <ArrowUpRight size={14} />
-                +12%
-              </StatBadge>
-            </StatHeader>
-            <StatMainValue>{Math.floor(animatedQuestions)}</StatMainValue>
-            <StatDescription>
-              {weeklyGoals.questionsTarget - weeklyGoals.questionsCompleted} more to reach weekly goal
-            </StatDescription>
-            <ChartContainer>
-              <WeeklyActivityChart data={weeklyGoals} />
-            </ChartContainer>
-          </Card.Content>
-        </ProgressCard>
+        {/* Charts Section */}
+        <ChartsSection>
+          <ChartCard>
+            <SectionTitle>Performance Overview</SectionTitle>
+            <PerformanceChart data={activityHistory} />
+          </ChartCard>
+          
+          <ChartCard>
+            <SectionTitle>Subject Progress</SectionTitle>
+            <SubjectRadarChart data={subjectProgress} />
+          </ChartCard>
+        </ChartsSection>
 
-        <ProgressCard variant="elevated">
-          <Card.Content>
-            <StatHeader>
-              <StatTitle>Subject Performance</StatTitle>
-              <Button variant="ghost" size="xs" onClick={() => navigate('/app/subjects')}>
-                View All
-              </Button>
-            </StatHeader>
-            <ChartContainer>
-              <SubjectRadarChart data={subjectProgress} />
-            </ChartContainer>
-          </Card.Content>
-        </ProgressCard>
-      </StatsGrid>
-
-      {/* Recent Activity */}
-      <div>
-        <SectionHeader>
-          <SectionTitle>Recent Activity</SectionTitle>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            rightIcon={<ChevronRight size={16} />}
-            onClick={() => navigate('/app/activity')}
-          >
-            View All
-          </Button>
-        </SectionHeader>
-        
-        {/* Activity items would go here */}
-      </div>
-    </DashboardContainer>
+        {/* Weekly Activity Chart */}
+        <ChartCard>
+          <SectionTitle>Weekly Activity</SectionTitle>
+          <WeeklyActivityChart data={activityHistory} />
+        </ChartCard>
+      </DashboardContainer>
+    </Layout>
   );
 };
 
