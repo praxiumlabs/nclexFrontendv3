@@ -218,6 +218,14 @@ const UserAvatar = styled.div`
   font-weight: ${({ theme }) => theme.fontWeight.semibold};
   font-size: ${({ theme }) => theme.fontSize.sm};
   flex-shrink: 0;
+  overflow: hidden; /* ADD THIS LINE */
+  
+  /* ADD THESE STYLES FOR IMAGES */
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 const UserInfo = styled.div`
@@ -361,6 +369,52 @@ export const Sidebar = ({ open, collapsed, onToggle, onClose }) => {
           <UserCard $collapsed={collapsed}>
             <UserAvatar>
               {getUserInitials?.() || 'GU'}
+            </UserAvatar>
+            {!collapsed && (
+              <UserInfo $collapsed={collapsed}>
+                <UserName>
+                  {isGuest ? 'Guest' : (getDisplayName?.() || 'User')}
+                </UserName>
+                <UserRole>
+                  {isGuest ? 'Guest Mode' : (user?.role || 'Student')}
+                </UserRole>
+              </UserInfo>
+            )}
+          </UserCard>
+        </SidebarFooter>
+
+// REPLACE WITH THIS:
+        <SidebarFooter>
+          <UserCard $collapsed={collapsed}>
+            <UserAvatar>
+              {(() => {
+                const [imageError, setImageError] = React.useState(false);
+                
+                const getProfileImageUrl = (user) => {
+                  if (user?.photoUrl && !imageError) return user.photoUrl;
+                  if (user?.avatar && !imageError) return user.avatar;
+                  if (user?.profile_image && !imageError) return user.profile_image;
+                  
+                  if (user?.name) {
+                    return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=10b981&color=fff&size=72&font-size=0.5`;
+                  }
+                  
+                  return null;
+                };
+
+                const profileImageUrl = getProfileImageUrl(user);
+
+                return profileImageUrl ? (
+                  <img 
+                    src={profileImageUrl}
+                    alt={user?.name || 'Profile'}
+                    onError={() => setImageError(true)}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  getUserInitials?.() || 'GU'
+                );
+              })()}
             </UserAvatar>
             {!collapsed && (
               <UserInfo $collapsed={collapsed}>

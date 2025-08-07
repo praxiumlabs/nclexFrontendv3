@@ -1,4 +1,7 @@
-// src/pages/Dashboard/Dashboard.jsx
+// Fix the duplicate Layout issue in src/pages/Dashboard/Dashboard.jsx
+// The Layout is already provided by the Route wrapper, so Dashboard should NOT wrap with Layout again
+
+// src/pages/Dashboard/Dashboard.jsx - FIXED VERSION
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { 
@@ -8,7 +11,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Layout } from '../../components/layout/layout/layout';
+// ❌ REMOVE: Layout import - it's already provided by the route wrapper
+// import { Layout } from '../../components/layout/layout/layout';
 import { Card } from '../../components/common/Card/Card';
 import { Button } from '../../components/common/Button/Button';
 import { Loader } from '../../components/common/Loader/Loader';
@@ -237,6 +241,49 @@ const StatDescription = styled.div`
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
+
+const ChartContainer = styled.div`
+  height: 320px;
+  padding: ${({ theme }) => theme.spacing.md};
+  overflow: hidden; /* Add this to prevent overflow */
+  position: relative; /* Add this for better containment */
+  
+  /* Ensure ResponsiveContainer fits properly */
+  .recharts-responsive-container {
+    max-height: 100% !important;
+    overflow: hidden !important;
+  }
+`;
+
+// Also update ProgressCard to handle overflow better
+const ProgressCard = styled(Card)`
+  position: relative;
+  overflow: hidden; /* Change from 'visible' to 'hidden' */
+  height: fit-content; /* Add this to prevent infinite height */
+  max-height: 480px; /* Add max height constraint */
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, 
+      ${({ theme }) => theme.colors.primary[500]} 0%, 
+      ${({ theme }) => theme.colors.primary[600]} 100%);
+    border-radius: ${({ theme }) => theme.borderRadius.lg};
+    z-index: -1;
+    opacity: 0;
+    transition: opacity ${({ theme }) => theme.transitions.base};
+  }
+  
+  &:hover::before {
+    opacity: 0.1;
+  }
+`;
+
+
 const ChartsSection = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -270,7 +317,7 @@ const Dashboard = () => {
   const activityHistory = useSelector(selectActivityHistory);
   const [loading, setLoading] = useState(true);
 
-  // Animated values
+  // Animated values with fallbacks
   const animatedAccuracy = useAnimatedValue(0, overview?.overallAccuracy || 0, { duration: 2000 });
   const animatedQuestions = useAnimatedValue(0, overview?.totalQuestionsAnswered || 0, { duration: 1500 });
   const animatedStreak = useAnimatedValue(0, overview?.currentStreak || 0, { duration: 1000 });
@@ -378,121 +425,114 @@ const Dashboard = () => {
     return <Loader fullScreen text="Loading your dashboard..." />;
   }
 
+  // ✅ FIXED: Return ONLY the dashboard content, NO Layout wrapper
   return (
-    <Layout>
-      <DashboardContainer>
-        {/* Welcome Section */}
-          <WelcomeSection>
-            <WelcomeContent>
-              <WelcomeTitle>
-                {getGreeting()}, <span>{user?.name || 'Student'}</span>! 👋
-              </WelcomeTitle>
-              <WelcomeSubtitle>
-                {user?.isGuest 
-                  ? 'You\'re browsing as a guest. Sign up for the full experience!'
-                  : overview?.currentStreak > 0 
-                    ? `You're on a ${overview.currentStreak} day streak! Keep it up!`
-                    : 'Ready to start your study session?'}
-              </WelcomeSubtitle>
-            </WelcomeContent>
-            
-            {/* User Profile Display */}
-            {user && !user.isGuest && (
-              <UserProfileContainer>
-                <UserAvatar>
-                  {user.photoUrl ? (
-                    <img 
-                      src={user.photoUrl} 
-                      alt={user.name} 
-                      onError={(e) => {
-                        // Fallback if image fails to load
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div style={{ display: user.photoUrl ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
-                    <User size={20} color="white" />
-                  </div>
-                </UserAvatar>
-                
-                <UserDetails>
-                  <UserName>{user.name || 'Unknown User'}</UserName>
-                  <UserEmail>{user.email || 'No email'}</UserEmail>
-                </UserDetails>
-                
-                <LogoutButton onClick={logout} title="Logout">
-                  <LogOut size={16} />
-                </LogoutButton>
-              </UserProfileContainer>
-            )}
-          </WelcomeSection>
-        {/* Quick Actions */}
-        <QuickActionsGrid>
-          {quickActions.map((action) => {
-            const IconComponent = action.icon;
-            return (
-              <QuickActionCard
-                key={action.id}
-                onClick={action.action}
-                $color={action.color}
-              >
-                <QuickActionIcon $color={action.color}>
-                  <IconComponent size={24} />
-                </QuickActionIcon>
-                <QuickActionTitle>{action.title}</QuickActionTitle>
-                <QuickActionDescription>{action.description}</QuickActionDescription>
-              </QuickActionCard>
-            );
-          })}
-        </QuickActionsGrid>
-
-        {/* Stats Grid */}
-        <StatsGrid>
-          {stats.map((stat, index) => {
-            const IconComponent = stat.icon;
-            return (
-              <StatCard key={index}>
-                <StatHeader>
-                  <StatTitle>{stat.title}</StatTitle>
-                  <StatBadge $trend={stat.trend}>
-                    {stat.trend === 'up' ? (
-                      <ArrowUpRight size={12} />
-                    ) : stat.trend === 'down' ? (
-                      <ArrowDownRight size={12} />
-                    ) : (
-                      <Activity size={12} />
-                    )}
-                    {stat.change}
-                  </StatBadge>
-                </StatHeader>
-                <StatValue>{stat.value}</StatValue>
-                <StatDescription>{stat.description}</StatDescription>
-              </StatCard>
-            );
-          })}
-        </StatsGrid>
-
-        {/* Charts Section */}
-        <ChartsSection>
-          <ChartCard>
-            <SectionTitle>Performance Overview</SectionTitle>
-            <PerformanceChart data={activityHistory} />
-          </ChartCard>
+    <DashboardContainer>
+      {/* Welcome Section */}
+      <WelcomeSection>
+        <WelcomeContent>
+          <WelcomeTitle>
+            {getGreeting()}, <span>{user?.name || 'Student'}</span>! 👋
+          </WelcomeTitle>
+          <WelcomeSubtitle>
+            {user?.isGuest 
+              ? 'You\'re browsing as a guest. Sign up for the full experience!'
+              : overview?.currentStreak > 0 
+                ? `You're on a ${overview.currentStreak} day streak! Keep it up!`
+                : 'Ready to start your study session?'}
+          </WelcomeSubtitle>
+        </WelcomeContent>
+        
+        {/* User Profile Display */}
+        {user && !user.isGuest && (
           
-          <ChartCard>
-            <SectionTitle>Subject Progress</SectionTitle>
-            <SubjectRadarChart data={subjectProgress} />
-          </ChartCard>
-        </ChartsSection>
+        <UserProfileContainer>
+              <UserAvatar>
+                {profileImageUrl ? (
+                  <img 
+                    src={profileImageUrl}
+                    alt={user?.name || 'Profile'}
+                    onError={() => setImageError(true)}
+                  />
+                ) : (
+                  <span style={{ color: 'white', fontWeight: '600' }}>
+                    {getInitials(user?.name)}
+                  </span>
+                )}
+              </UserAvatar>
+              <UserDetails>
+                <UserName>{user?.name || 'User'}</UserName>
+                <UserEmail>{user?.email || 'user@example.com'}</UserEmail>
+              </UserDetails>
+            </UserProfileContainer>
+        )}
+      </WelcomeSection>
 
-        {/* Weekly Activity Chart */}
+      {/* Quick Actions */}
+      <QuickActionsGrid>
+        {quickActions.map((action) => {
+          const IconComponent = action.icon;
+          return (
+            <QuickActionCard
+              key={action.id}
+              onClick={action.action}
+              $color={action.color}
+            >
+              <QuickActionIcon $color={action.color}>
+                <IconComponent size={24} />
+              </QuickActionIcon>
+              <QuickActionTitle>{action.title}</QuickActionTitle>
+              <QuickActionDescription>{action.description}</QuickActionDescription>
+            </QuickActionCard>
+          );
+        })}
+      </QuickActionsGrid>
+
+      {/* Stats Grid */}
+      <StatsGrid>
+        {stats.map((stat, index) => {
+          const IconComponent = stat.icon;
+          return (
+            <StatCard key={index}>
+              <StatHeader>
+                <StatTitle>{stat.title}</StatTitle>
+                <StatBadge $trend={stat.trend}>
+                  {stat.trend === 'up' ? (
+                    <ArrowUpRight size={12} />
+                  ) : stat.trend === 'down' ? (
+                    <ArrowDownRight size={12} />
+                  ) : (
+                    <Activity size={12} />
+                  )}
+                  {stat.change}
+                </StatBadge>
+              </StatHeader>
+              <StatValue>{stat.value}</StatValue>
+              <StatDescription>{stat.description}</StatDescription>
+            </StatCard>
+          );
+        })}
+      </StatsGrid>
+
+      {/* Charts Section */}
+      <ChartsSection>
         <ChartCard>
-          <SectionTitle>Weekly Activity</SectionTitle>
-          <WeeklyActivityChart data={activityHistory} />
+          <SectionTitle>Performance Overview</SectionTitle>
+          <PerformanceChart data={activityHistory} />
         </ChartCard>
-      </DashboardContainer>
-    </Layout>
+        
+        <ChartCard>
+          <SectionTitle>Subject Progress</SectionTitle>
+          <SubjectRadarChart data={subjectProgress} />
+        </ChartCard>
+      </ChartsSection>
+
+      {/* Weekly Activity Chart */}
+      <ChartCard>
+        <SectionTitle>Weekly Activity</SectionTitle>
+        <WeeklyActivityChart data={activityHistory} />
+      </ChartCard>
+    </DashboardContainer>
   );
 };
 
