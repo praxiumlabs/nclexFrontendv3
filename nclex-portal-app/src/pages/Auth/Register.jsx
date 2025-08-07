@@ -11,7 +11,7 @@ import { Button } from '../../components/common/Button/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { Loader } from '../../components/common/Loader/Loader';
-import { useGoogleAuth } from '../../hooks/useGoogleAuth';
+import { useGoogleAuth } from '../../hooks/useGoogleAuth'; 
 
 
 // Styled components
@@ -414,6 +414,7 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({ strength: 'none', score: 0 });
+  const { signInWithGoogle, loading: googleLoading, error: googleError } = useGoogleAuth();
 
   const {
     register,
@@ -707,9 +708,6 @@ const Register = () => {
               )}
               Sign up with Google
             </SocialButton>
-
-            // Add error display for Google auth errors:
-            // Add this after your existing error display in the Register component:
 
             {googleError && (
               <ErrorMessage>

@@ -5,7 +5,7 @@ import { logout, refreshToken } from '../store/slices/authSlice';
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8080/api',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8081/api',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -184,7 +184,7 @@ export const API_ENDPOINTS = {
     forgotPassword: '/auth/forgot-password',
     resetPassword: '/auth/reset-password',
     verifyEmail: '/auth/verify-email',
-    googleLogin: '/auth/google/login',
+    googleLogin: '/user/login',
     googleCallback: '/auth/google/callback',
   },
   

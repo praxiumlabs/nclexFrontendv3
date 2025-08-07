@@ -4,9 +4,17 @@ import { apiClient, API_ENDPOINTS } from './api';
 class AuthService {
   // Login user
   async login(credentials) {
+
     try {
-      const response = await apiClient.post(API_ENDPOINTS.auth.login, credentials);
-      const { accessToken, refreshToken, user } = response.data;
+
+      const response = await apiClient.get(API_ENDPOINTS.auth.googleLogin, {
+        tokenId: credentials.token
+      });
+
+      const accessToken = response.data.responseBody.token;
+      const refreshToken = null; 
+      const user = {};
+      
       
       // Store tokens
       this.setTokens({ accessToken, refreshToken });
@@ -17,7 +25,9 @@ class AuthService {
         user,
       };
     } catch (error) {
+      console.error("Login failed:", error);
       throw this.handleError(error);
+
     }
   }
   

@@ -127,7 +127,7 @@ export const LOCAL_STORAGE_KEYS = {
 };
 
 export const API_ENDPOINTS = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:8080/api',
+  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:8081/api',
   TIMEOUT: 30000
 };
 

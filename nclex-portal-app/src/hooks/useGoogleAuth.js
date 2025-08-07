@@ -23,8 +23,9 @@ export const useGoogleAuth = () => {
           client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
           callback: async (response) => {
             try {
+            console.log("Google Response:", response); 
               // Send Google token to your backend for verification
-              const authResult = await AuthService.googleLogin(response.credential);
+            const authResult = await AuthService.login({ token: response.credential });
               
               // Update auth state
               await login(authResult);
