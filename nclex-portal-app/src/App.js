@@ -1,5 +1,5 @@
-// src/App.js - Fixed with correct import paths
-import React, { Suspense, lazy } from 'react';
+// src/App.js - FIXED Redux Provider structure
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { ThemeProvider } from 'styled-components';
@@ -7,14 +7,13 @@ import { store } from './store';
 import { GlobalStyles } from './styles/GlobalStyles';
 import { lightTheme, darkTheme } from './styles/theme';
 import { useTheme } from './hooks/useTheme';
+import { useAuth } from './hooks/useAuth';
 import { Loader } from './components/common/Loader/Loader';
 import { ToastManager } from './components/common/Toast/Toast';
 import { ErrorBoundary } from './components/common/ErrorBoundary/ErrorBoundary';
 import { PrivateRoute } from './routes/PrivateRoute';
 import { PublicRoute } from './routes/PublicRoute';
 import { Layout } from './components/layout/layout/layout';
-import { useAuth } from './hooks/useAuth';
-import { useEffect } from 'react';
 
 // Lazy load pages for better performance
 const Landing = lazy(() => import('./pages/Landing/Landing'));
@@ -26,11 +25,19 @@ const Register = lazy(() => import('./pages/Auth/Register'));
 const Profile = lazy(() => import('./pages/Profile/Profile'));
 const NotFound = lazy(() => import('./pages/NotFound/NotFound'));
 
-// App content component that uses hooks
+// ✅ App content component that uses hooks (AFTER Provider wrapper)
 function AppContent() {
-  const { initializeAuth } = useAuth();
+  const { initializeAuth } = useAuth(); // ✅ Now this is INSIDE Provider
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
+
+  // ✅ Initialize auth from localStorage when app starts
+  useEffect(() => {
+    const initialized = initializeAuth();
+    if (initialized) {
+      console.log('User session restored from localStorage');
+    }
+  }, [initializeAuth]);
 
   return (
     <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
@@ -102,17 +109,8 @@ function AppContent() {
   );
 }
 
-// Main App component
+// ✅ Main App component - ONLY handles Provider wrapper
 function App() {
-    const { initializeAuth } = useAuth();
-  
-  useEffect(() => {
-    // Initialize auth from localStorage when app starts
-    const initialized = initializeAuth();
-    if (initialized) {
-      console.log('User session restored from localStorage');
-    }
-  }, [initializeAuth]);
   return (
     <Provider store={store}>
       <AppContent />

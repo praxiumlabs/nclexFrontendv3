@@ -30,7 +30,6 @@ export const useAuth = () => {
     const guestUser = localStorage.getItem('guestUser');
     
     if (isGuest && guestUser && !user) {
-      // Set guest user in Redux store
       dispatch(setUser(JSON.parse(guestUser)));
       return true;
     }
@@ -86,13 +85,9 @@ export const useAuth = () => {
       createdAt: new Date().toISOString(),
     };
 
-    // Set guest mode in localStorage
     localStorage.setItem('guestMode', 'true');
     localStorage.setItem('guestUser', JSON.stringify(guestUser));
-    
-    // Set user in Redux store
     dispatch(setUser(guestUser));
-    
     dispatch(showSuccessToast('Welcome! You\'re browsing as a guest.'));
     navigate('/app/dashboard');
     
@@ -102,9 +97,11 @@ export const useAuth = () => {
   // Logout function
   const logout = useCallback(async () => {
     try {
-      // Clear guest mode
+      // Clear all auth data
       localStorage.removeItem('guestMode');
       localStorage.removeItem('guestUser');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
       
       // Only call API logout if not a guest
       if (!user?.isGuest) {
@@ -114,14 +111,12 @@ export const useAuth = () => {
       dispatch(showSuccessToast('Logged out successfully.'));
       navigate('/login');
     } catch (error) {
-      // Still navigate to login even if logout API fails
       navigate('/login');
     }
   }, [dispatch, navigate, user?.isGuest]);
 
   // Update profile function
   const updateProfile = useCallback(async (profileData) => {
-    // Prevent guests from updating profile
     if (user?.isGuest) {
       dispatch(showErrorToast('Please create an account to update your profile.'));
       return;
@@ -139,7 +134,6 @@ export const useAuth = () => {
 
   // Change password function
   const changePassword = useCallback(async (passwordData) => {
-    // Prevent guests from changing password
     if (user?.isGuest) {
       dispatch(showErrorToast('Please create an account to change your password.'));
       return;
@@ -154,20 +148,6 @@ export const useAuth = () => {
       throw error;
     }
   }, [dispatch, user?.isGuest]);
-
-  const setAuthData = useCallback(({ token, user }) => {
-    console.log('Setting auth data:', { token, user });
-    
-    // Store in localStorage
-    localStorage.setItem('authToken', token);
-    localStorage.setItem('user', JSON.stringify(user));
-    
-    // Update Redux state
-    dispatch(setUser(user));
-    
-    // Show success message
-    dispatch(showSuccessToast(`Welcome back, ${user.name || 'User'}!`));
-  }, [dispatch]);
 
   // Clear authentication error
   const clearAuthError = useCallback(() => {
@@ -189,7 +169,6 @@ export const useAuth = () => {
   // Get user initials for avatar
   const getUserInitials = useCallback(() => {
     if (!user?.name) return 'G';
-    
     if (user.isGuest) return 'G';
     
     const names = user.name.split(' ');
@@ -202,38 +181,46 @@ export const useAuth = () => {
   // Format user display name
   const getDisplayName = useCallback(() => {
     if (!user?.name) return 'User';
-    
     if (user.isGuest) return 'Guest';
     
     const firstName = user.name.split(' ')[0];
     return firstName;
   }, [user]);
 
+  // ✅ ADD: setAuthData method for Google auth
+  const setAuthData = useCallback(({ token, user }) => {
+    console.log('Setting auth data:', { token, user });
+    
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    dispatch(setUser(user));
+    dispatch(showSuccessToast(`Welcome back, ${user.name || 'User'}!`));
+  }, [dispatch]);
+
+  // ✅ ADD: initializeAuth method
+  const initializeAuth = useCallback(() => {
+    const token = localStorage.getItem('authToken');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      try {
+        const user = JSON.parse(userData);
+        dispatch(setUser(user));
+        console.log('Auth initialized from localStorage:', user);
+        return true;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+      }
+    }
+    return false;
+  }, [dispatch]);
+
   // Check if user is guest
   const isGuest = user?.isGuest || checkGuestMode();
-  
-  // Override isAuthenticated to include guest mode
   const isAuthenticatedOrGuest = isAuthenticated || checkGuestMode();
 
-
-const initializeAuth = useCallback(() => {
-  const token = localStorage.getItem('authToken');
-  const userData = localStorage.getItem('user');
-  
-  if (token && userData) {
-    try {
-      const user = JSON.parse(userData);
-      dispatch(setUser(user));
-      console.log('Auth initialized from localStorage:', user);
-      return true;
-    } catch (error) {
-      console.error('Error parsing user data:', error);
-      localStorage.removeItem('authToken');
-      localStorage.removeUser('user');
-    }
-  }
-  return false;
-}, [dispatch]);
   return {
     // State
     user,
@@ -243,7 +230,6 @@ const initializeAuth = useCallback(() => {
     error: auth.error,
     profileLoading: auth.profileLoading,
     profileError: auth.profileError,
-
     
     // Actions
     login,
@@ -253,6 +239,8 @@ const initializeAuth = useCallback(() => {
     updateProfile,
     changePassword,
     clearAuthError,
+    
+    // ✅ Google auth methods
     setAuthData,
     initializeAuth,
     
