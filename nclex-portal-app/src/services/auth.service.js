@@ -55,23 +55,35 @@ class AuthService {
     try {
       console.log('Sending Google token to backend:', googleTokenId);
       
-      // ✅ FIXED: Use GET request with query parameter to match your backend
+      // ✅ FIXED: Use GET request with query parameter
       const response = await apiClient.get(`${API_ENDPOINTS.auth.googleLogin}?tokenId=${googleTokenId}`);
       
       console.log('Backend response:', response.data);
       
-      // ✅ Parse your backend response format
-      const token = response.data.responseBody?.token;
-      const user = {
-        email: response.data.responseBody?.email,
-        name: response.data.responseBody?.name,
-        photoUrl: response.data.responseBody?.photoUrl,
-        id: response.data.responseBody?.id,
-      };
+      // ✅ FIXED: Parse your exact backend response format
+      const { responseCode, success, responseBody } = response.data;
       
-      if (!token) {
+      if (!success || responseCode !== "1") {
+        throw new Error('Authentication failed');
+      }
+      
+      if (!responseBody || !responseBody.token) {
         throw new Error('No token received from backend');
       }
+
+      // ✅ FIXED: Extract data according to your backend format
+      const token = responseBody.token;
+      
+      // ✅ FIXED: Since you mentioned email, name, photoUrl are returned but not in current response
+      // We'll extract user data from the JWT token payload for now
+      const userFromToken = this.parseJwtPayload(token);
+      
+      const user = {
+        email: userFromToken.email || responseBody.email,
+        name: userFromToken.name || responseBody.name,
+        photoUrl: userFromToken.picture || responseBody.photoUrl,
+        id: userFromToken.sub || responseBody.id,
+      };
 
       return { token, user };
       
@@ -80,7 +92,17 @@ class AuthService {
       throw this.handleError(error);
     }
   }
-  
+  // ✅ ADD: Helper method to parse JWT token payload
+  parseJwtPayload(token) {
+    try {
+      const payload = token.split('.')[1];
+      const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+      return JSON.parse(decoded);
+    } catch (error) {
+      console.error('Error parsing JWT:', error);
+      return {};
+    }
+  }
   // Refresh access token
   async refreshAccessToken(refreshToken) {
     try {
@@ -169,10 +191,12 @@ class AuthService {
   
   // Token management methods
   // Updated token management to use 'authToken' key
-  setTokens({ accessToken, refreshToken }) {
-    if (accessToken) {
-      // Use 'authToken' as the key for consistency
-      localStorage.setItem('authToken', accessToken);
+setTokens({ accessToken, refreshToken, token }) {
+    // Handle both formats: your new format and existing format
+    const tokenToStore = token || accessToken;
+    
+    if (tokenToStore) {
+      localStorage.setItem('authToken', tokenToStore);
     }
     if (refreshToken) {
       localStorage.setItem('refreshToken', refreshToken);
@@ -181,7 +205,7 @@ class AuthService {
   
   getTokens() {
     return {
-      accessToken: localStorage.getItem('authToken'), // Changed key
+      accessToken: localStorage.getItem('authToken'),
       refreshToken: localStorage.getItem('refreshToken'),
     };
   }
@@ -190,6 +214,10 @@ class AuthService {
     localStorage.removeItem('authToken');
     localStorage.removeItem('refreshToken');
   }
+
+  // Keep your existing methods unchanged...
+  // login, register, logout, etc.
+
   
   // Check if user is authenticated
   isAuthenticated() {

@@ -28,6 +28,7 @@ const NotFound = lazy(() => import('./pages/NotFound/NotFound'));
 
 // App content component that uses hooks
 function AppContent() {
+  const { initializeAuth } = useAuth();
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
 

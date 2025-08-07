@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { 
   TrendingUp, Clock, Target, Star, Zap, Brain, 
   BookOpen, Calendar, Award, Activity, Coffee,
-  ChevronRight, ArrowUpRight, ArrowDownRight
+  ChevronRight, ArrowUpRight, ArrowDownRight, LogOut, User
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,7 +12,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Card } from '../../components/common/Card/Card';
 import { Button } from '../../components/common/Button/Button';
 import { Loader } from '../../components/common/Loader/Loader';
-import { UserProfile } from '../../components/common/UserProfile/UserProfile';
 import { useAuth } from '../../hooks/useAuth';
 import { 
   selectOverview, 
@@ -30,6 +29,66 @@ import {
 } from '../../components/dashboard/Charts';
 
 // Styled components
+
+
+// Add these new styled components for user profile display
+const UserProfileContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.background.paper};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  border: 1px solid ${({ theme }) => theme.colors.border.light};
+`;
+
+const UserAvatar = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: ${({ theme }) => theme.colors.primary[500]};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
+const UserDetails = styled.div`
+  flex: 1;
+`;
+
+const UserName = styled.div`
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: ${({ theme }) => theme.fontSize.base};
+`;
+
+const UserEmail = styled.div`
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-top: 2px;
+`;
+
+const LogoutButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.gray[100]};
+    color: ${({ theme }) => theme.colors.error.main};
+  }
+`;
 const DashboardContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -284,6 +343,7 @@ const LogoutButton = styled.button`
 const Dashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { user, logout } = useAuth();
   const overview = useSelector(selectOverview);
   const subjectProgress = useSelector(selectSubjectProgress);
   const weeklyGoals = useSelector(selectWeeklyGoals);
@@ -329,33 +389,35 @@ const Dashboard = () => {
         <WelcomeSection>
           <WelcomeContent>
             <WelcomeTitle>
-              Welcome back, {user?.name || 'Student'}! 👋
+              Welcome back, <span>{user?.name || 'Student'}</span>! 👋
             </WelcomeTitle>
             <WelcomeSubtitle>
               Ready to continue your NCLEX preparation?
             </WelcomeSubtitle>
           </WelcomeContent>
           
-          {/* User Profile Display */}
+          {/* ✅ ADD: User Profile Display */}
           {user && !user.isGuest && (
             <UserProfileContainer>
-              {user.photoUrl && (
-                <UserAvatar>
+              <UserAvatar>
+                {user.photoUrl ? (
                   <img src={user.photoUrl} alt={user.name} />
-                </UserAvatar>
-              )}
+                ) : (
+                  <User size={20} color="white" />
+                )}
+              </UserAvatar>
+              
               <UserDetails>
                 <UserName>{user.name}</UserName>
                 <UserEmail>{user.email}</UserEmail>
               </UserDetails>
+              
               <LogoutButton onClick={logout}>
                 <LogOut size={16} />
               </LogoutButton>
             </UserProfileContainer>
           )}
         </WelcomeSection>
-        
-        {/* Rest of your dashboard content */}
       </DashboardContainer>
     </Layout>
   );

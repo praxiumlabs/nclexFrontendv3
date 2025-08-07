@@ -216,24 +216,24 @@ export const useAuth = () => {
   const isAuthenticatedOrGuest = isAuthenticated || checkGuestMode();
 
 
-  const initializeAuth = useCallback(() => {
-    const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('user');
-    
-    if (token && userData) {
-      try {
-        const user = JSON.parse(userData);
-        dispatch(setUser(user));
-        console.log('Auth initialized from localStorage:', user);
-        return true;
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-      }
+const initializeAuth = useCallback(() => {
+  const token = localStorage.getItem('authToken');
+  const userData = localStorage.getItem('user');
+  
+  if (token && userData) {
+    try {
+      const user = JSON.parse(userData);
+      dispatch(setUser(user));
+      console.log('Auth initialized from localStorage:', user);
+      return true;
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      localStorage.removeItem('authToken');
+      localStorage.removeUser('user');
     }
-    return false;
-  }, [dispatch]);
+  }
+  return false;
+}, [dispatch]);
   return {
     // State
     user,
