@@ -146,7 +146,6 @@ const Profile = () => {
   };
 
   return (
-    <Layout pageTitle="Profile" pageDescription="Manage your account settings">
       <ProfileContainer>
         <ProfileHeader>
           <AvatarSection>
@@ -286,7 +285,6 @@ const Profile = () => {
           </Modal.Footer>
         </Modal>
       </ProfileContainer>
-    </Layout>
   );
 };
 

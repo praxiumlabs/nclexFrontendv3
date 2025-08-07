@@ -1,11 +1,11 @@
 // src/components/layout/Sidebar/Sidebar.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 import { 
   ChevronLeft, Home, BookOpen, Brain, Target, BarChart3, 
   Calendar, Settings, HelpCircle, Users, Award, FileText,
-  Clock, Zap, TrendingUp, Menu
+  Clock, Zap, TrendingUp, Menu, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 
@@ -36,8 +36,8 @@ const SidebarOverlay = styled.div`
   background: rgba(0, 0, 0, 0.5);
   opacity: ${({ $open }) => $open ? '1' : '0'};
   visibility: ${({ $open }) => $open ? 'visible' : 'hidden'};
+  z-index: ${({ theme }) => theme.zIndex.backdrop};
   transition: all ${({ theme }) => theme.transitions.base};
-  z-index: ${({ theme }) => theme.zIndex.overlay};
   
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     display: none;
@@ -45,12 +45,12 @@ const SidebarOverlay = styled.div`
 `;
 
 const SidebarHeader = styled.div`
-  padding: ${({ theme }) => theme.spacing.lg};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-shrink: 0; /* Prevent shrinking */
+  padding: ${({ theme }) => theme.spacing.lg};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
+  flex-shrink: 0;
 `;
 
 const ToggleButton = styled.button`
@@ -70,21 +70,17 @@ const ToggleButton = styled.button`
     background: ${({ theme }) => theme.colors.action.selected};
   }
   
-  svg {
-    transition: transform ${({ theme }) => theme.transitions.base};
-    ${({ $collapsed }) => $collapsed && css`
-      transform: rotate(180deg);
-    `}
-  }
+  ${({ $collapsed }) => $collapsed && css`
+    transform: rotate(180deg);
+  `}
 `;
 
 const SidebarContent = styled.div`
   flex: 1;
   overflow-y: auto;
-  overflow-x: hidden;
   padding: ${({ theme }) => theme.spacing.md};
   
-  /* Custom scrollbar styles */
+  /* Custom scrollbar */
   &::-webkit-scrollbar {
     width: 6px;
   }
@@ -96,25 +92,29 @@ const SidebarContent = styled.div`
   &::-webkit-scrollbar-thumb {
     background: ${({ theme }) => theme.colors.gray[300]};
     border-radius: 3px;
-    
-    &:hover {
-      background: ${({ theme }) => theme.colors.gray[400]};
-    }
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: ${({ theme }) => theme.colors.gray[400]};
   }
 `;
 
 const NavSection = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 
 const SectionTitle = styled.h3`
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+  margin: 0 0 ${({ theme }) => theme.spacing.xs};
   font-size: ${({ theme }) => theme.fontSize.xs};
   font-weight: ${({ theme }) => theme.fontWeight.semibold};
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: ${({ theme }) => theme.colors.text.hint};
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => `0 ${theme.spacing.sm}`};
   opacity: ${({ $collapsed }) => $collapsed ? '0' : '1'};
   transition: opacity ${({ theme }) => theme.transitions.base};
 `;
@@ -153,6 +153,29 @@ const NavItem = styled(Link)`
   `}
 `;
 
+const NavItemButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.sm}`};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  text-decoration: none;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  transition: all ${({ theme }) => theme.transitions.fast};
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.action.hover};
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+`;
+
 const NavIcon = styled.span`
   display: flex;
   align-items: center;
@@ -183,11 +206,50 @@ const NavBadge = styled.span`
   transition: opacity ${({ theme }) => theme.transitions.base};
 `;
 
+const ExpandIcon = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform ${({ theme }) => theme.transitions.fast};
+  
+  ${({ $expanded }) => $expanded && css`
+    transform: rotate(90deg);
+  `}
+`;
+
+const SubNavItems = styled.div`
+  margin-left: ${({ theme }) => theme.spacing.xl};
+  margin-top: ${({ theme }) => theme.spacing.xs};
+  display: ${({ $show }) => $show ? 'block' : 'none'};
+`;
+
+const SubNavItem = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  text-decoration: none;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  transition: all ${({ theme }) => theme.transitions.fast};
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.action.hover};
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+  
+  ${({ $active }) => $active && css`
+    color: ${({ theme }) => theme.colors.primary[600]};
+    font-weight: ${({ theme }) => theme.fontWeight.medium};
+  `}
+`;
+
 const SidebarFooter = styled.div`
   padding: ${({ theme }) => theme.spacing.lg};
   border-top: 1px solid ${({ theme }) => theme.colors.border.light};
-  flex-shrink: 0; /* Prevent shrinking */
-  margin-top: auto; /* Push to bottom */
+  flex-shrink: 0;
+  margin-top: auto;
 `;
 
 const UserCard = styled.div`
@@ -218,9 +280,8 @@ const UserAvatar = styled.div`
   font-weight: ${({ theme }) => theme.fontWeight.semibold};
   font-size: ${({ theme }) => theme.fontSize.sm};
   flex-shrink: 0;
-  overflow: hidden; /* ADD THIS LINE */
+  overflow: hidden;
   
-  /* ADD THESE STYLES FOR IMAGES */
   img {
     width: 100%;
     height: 100%;
@@ -251,6 +312,9 @@ const UserRole = styled.div`
 export const Sidebar = ({ open, collapsed, onToggle, onClose }) => {
   const location = useLocation();
   const { user, getDisplayName, getUserInitials, isGuest } = useAuth();
+  
+  // FIX: Move useState to the top of the component
+  const [expandedItems, setExpandedItems] = useState({});
 
   // Navigation items
   const mainNavItems = [
@@ -263,7 +327,16 @@ export const Sidebar = ({ open, collapsed, onToggle, onClose }) => {
   ];
 
   const learningNavItems = [
-    { path: '/app/subjects', label: 'Subjects', icon: FileText },
+    { 
+      id: 'subjects',
+      label: 'Subjects', 
+      icon: FileText,
+      children: [
+        { path: '/app/subjects/all', label: 'All Subjects' },
+        { path: '/app/subjects/favorites', label: 'Favorites' },
+        { path: '/app/subjects/recent', label: 'Recently Studied' },
+      ]
+    },
     { path: '/app/flashcards', label: 'Flashcards', icon: Zap },
     { path: '/app/case-studies', label: 'Case Studies', icon: Users },
     { path: '/app/achievements', label: 'Achievements', icon: Award },
@@ -275,6 +348,79 @@ export const Sidebar = ({ open, collapsed, onToggle, onClose }) => {
     { path: '/app/settings', label: 'Settings', icon: Settings },
     { path: '/app/help', label: 'Help & Support', icon: HelpCircle },
   ];
+
+  // FIX: Corrected handleItemClick function
+  const handleItemClick = (item) => {
+    if (item.children) {
+      // Use the state that's already defined at the component level
+      setExpandedItems(prev => ({
+        ...prev,
+        [item.id]: !prev[item.id]
+      }));
+    }
+  };
+
+  const renderNavItem = (item) => {
+    const Icon = item.icon;
+    const isExpanded = expandedItems[item.id];
+
+    if (item.children) {
+      return (
+        <div key={item.id}>
+          <NavItemButton
+            onClick={() => handleItemClick(item)}
+            title={collapsed ? item.label : undefined}
+          >
+            <NavIcon>
+              <Icon size={20} />
+            </NavIcon>
+            <NavLabel $collapsed={collapsed}>
+              {item.label}
+            </NavLabel>
+            {!collapsed && (
+              <ExpandIcon $expanded={isExpanded}>
+                <ChevronRight size={16} />
+              </ExpandIcon>
+            )}
+          </NavItemButton>
+          {!collapsed && (
+            <SubNavItems $show={isExpanded}>
+              {item.children.map(child => (
+                <SubNavItem
+                  key={child.path}
+                  to={child.path}
+                  $active={location.pathname === child.path}
+                >
+                  {child.label}
+                </SubNavItem>
+              ))}
+            </SubNavItems>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <NavItem
+        key={item.path}
+        to={item.path}
+        $active={location.pathname === item.path}
+        title={collapsed ? item.label : undefined}
+      >
+        <NavIcon>
+          <Icon size={20} />
+        </NavIcon>
+        <NavLabel $collapsed={collapsed}>
+          {item.label}
+        </NavLabel>
+        {item.badge && (
+          <NavBadge $collapsed={collapsed}>
+            {item.badge}
+          </NavBadge>
+        )}
+      </NavItem>
+    );
+  };
 
   return (
     <>
@@ -295,80 +441,28 @@ export const Sidebar = ({ open, collapsed, onToggle, onClose }) => {
         <SidebarContent>
           <NavSection>
             <SectionTitle $collapsed={collapsed}>MAIN</SectionTitle>
-            {mainNavItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavItem
-                  key={item.path}
-                  to={item.path}
-                  $active={location.pathname === item.path}
-                  title={collapsed ? item.label : undefined}
-                >
-                  <NavIcon>
-                    <Icon size={20} />
-                  </NavIcon>
-                  <NavLabel $collapsed={collapsed}>
-                    {item.label}
-                  </NavLabel>
-                  {item.badge && (
-                    <NavBadge $collapsed={collapsed}>
-                      {item.badge}
-                    </NavBadge>
-                  )}
-                </NavItem>
-              );
-            })}
+            {mainNavItems.map(item => renderNavItem(item))}
           </NavSection>
 
           <NavSection>
             <SectionTitle $collapsed={collapsed}>LEARNING</SectionTitle>
-            {learningNavItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavItem
-                  key={item.path}
-                  to={item.path}
-                  $active={location.pathname === item.path}
-                  title={collapsed ? item.label : undefined}
-                >
-                  <NavIcon>
-                    <Icon size={20} />
-                  </NavIcon>
-                  <NavLabel $collapsed={collapsed}>
-                    {item.label}
-                  </NavLabel>
-                </NavItem>
-              );
-            })}
+            {learningNavItems.map(item => renderNavItem(item))}
           </NavSection>
 
           <NavSection>
             <SectionTitle $collapsed={collapsed}>SUPPORT</SectionTitle>
-            {supportNavItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavItem
-                  key={item.path}
-                  to={item.path}
-                  $active={location.pathname === item.path}
-                  title={collapsed ? item.label : undefined}
-                >
-                  <NavIcon>
-                    <Icon size={20} />
-                  </NavIcon>
-                  <NavLabel $collapsed={collapsed}>
-                    {item.label}
-                  </NavLabel>
-                </NavItem>
-              );
-            })}
+            {supportNavItems.map(item => renderNavItem(item))}
           </NavSection>
         </SidebarContent>
 
         <SidebarFooter>
           <UserCard $collapsed={collapsed}>
             <UserAvatar>
-              {getUserInitials?.() || 'GU'}
+              {user?.photoUrl ? (
+                <img src={user.photoUrl} alt={user.name || 'User'} />
+              ) : (
+                getUserInitials?.() || 'GU'
+              )}
             </UserAvatar>
             {!collapsed && (
               <UserInfo $collapsed={collapsed}>
@@ -376,53 +470,7 @@ export const Sidebar = ({ open, collapsed, onToggle, onClose }) => {
                   {isGuest ? 'Guest' : (getDisplayName?.() || 'User')}
                 </UserName>
                 <UserRole>
-                  {isGuest ? 'Guest Mode' : (user?.role || 'Student')}
-                </UserRole>
-              </UserInfo>
-            )}
-          </UserCard>
-        </SidebarFooter>
-
-// REPLACE WITH THIS:
-        <SidebarFooter>
-          <UserCard $collapsed={collapsed}>
-            <UserAvatar>
-              {(() => {
-                const [imageError, setImageError] = React.useState(false);
-                
-                const getProfileImageUrl = (user) => {
-                  if (user?.photoUrl && !imageError) return user.photoUrl;
-                  if (user?.avatar && !imageError) return user.avatar;
-                  if (user?.profile_image && !imageError) return user.profile_image;
-                  
-                  if (user?.name) {
-                    return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=10b981&color=fff&size=72&font-size=0.5`;
-                  }
-                  
-                  return null;
-                };
-
-                const profileImageUrl = getProfileImageUrl(user);
-
-                return profileImageUrl ? (
-                  <img 
-                    src={profileImageUrl}
-                    alt={user?.name || 'Profile'}
-                    onError={() => setImageError(true)}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                ) : (
-                  getUserInitials?.() || 'GU'
-                );
-              })()}
-            </UserAvatar>
-            {!collapsed && (
-              <UserInfo $collapsed={collapsed}>
-                <UserName>
-                  {isGuest ? 'Guest' : (getDisplayName?.() || 'User')}
-                </UserName>
-                <UserRole>
-                  {isGuest ? 'Guest Mode' : (user?.role || 'Student')}
+                  {isGuest ? 'Guest Mode' : 'Student'}
                 </UserRole>
               </UserInfo>
             )}

@@ -1,7 +1,4 @@
-// Fix the duplicate Layout issue in src/pages/Dashboard/Dashboard.jsx
-// The Layout is already provided by the Route wrapper, so Dashboard should NOT wrap with Layout again
-
-// src/pages/Dashboard/Dashboard.jsx - FIXED VERSION
+// src/pages/Dashboard/Dashboard.jsx
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { 
@@ -11,8 +8,6 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-// ❌ REMOVE: Layout import - it's already provided by the route wrapper
-// import { Layout } from '../../components/layout/layout/layout';
 import { Card } from '../../components/common/Card/Card';
 import { Button } from '../../components/common/Button/Button';
 import { Loader } from '../../components/common/Loader/Loader';
@@ -26,11 +21,11 @@ import {
   fetchSubjectProgress
 } from '../../store/slices/progressSlice';
 import { useAnimatedValue } from '../../hooks/useAnimatedValue';
-import {
-  PerformanceChart,
-  WeeklyActivityChart,
-  SubjectRadarChart
-} from '../../components/dashboard/Charts';
+// import {
+//   PerformanceChart,
+//   WeeklyActivityChart,
+//   SubjectRadarChart
+// } from '../../components/dashboard/Charts';
 
 // Styled components
 const DashboardContainer = styled.div`
@@ -40,34 +35,37 @@ const DashboardContainer = styled.div`
 `;
 
 const WelcomeSection = styled.div`
+  background: linear-gradient(135deg, 
+    ${({ theme }) => theme.colors.primary[500]} 0%, 
+    ${({ theme }) => theme.colors.primary[600]} 100%);
+  border-radius: ${({ theme }) => theme.borderRadius.xl};
+  padding: ${({ theme }) => theme.spacing.xl};
+  color: white;
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: ${({ theme }) => theme.spacing.xl};
   
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     flex-direction: column;
-    align-items: flex-start;
-    gap: ${({ theme }) => theme.spacing.md};
+    text-align: center;
+    gap: ${({ theme }) => theme.spacing.lg};
   }
 `;
 
-const WelcomeContent = styled.div``;
+const WelcomeContent = styled.div`
+  flex: 1;
+`;
 
 const WelcomeTitle = styled.h1`
   font-size: ${({ theme }) => theme.fontSize['3xl']};
   font-weight: ${({ theme }) => theme.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0 0 ${({ theme }) => theme.spacing.xs};
-  
-  span {
-    color: ${({ theme }) => theme.colors.primary[600]};
-  }
+  margin: 0 0 ${({ theme }) => theme.spacing.sm};
 `;
 
 const WelcomeSubtitle = styled.p`
   font-size: ${({ theme }) => theme.fontSize.lg};
-  color: ${({ theme }) => theme.colors.text.secondary};
+  opacity: 0.9;
   margin: 0;
 `;
 
@@ -75,21 +73,24 @@ const UserProfileContainer = styled.div`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
+  background: rgba(255, 255, 255, 0.1);
   padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.background.paper};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
-  border: 1px solid ${({ theme }) => theme.colors.border.light};
+  backdrop-filter: blur(10px);
 `;
 
 const UserAvatar = styled.div`
-  width: 48px;
-  height: 48px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  overflow: hidden;
-  background: ${({ theme }) => theme.colors.primary[500]};
+  background: white;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: ${({ theme }) => theme.fontSize.xl};
+  font-weight: ${({ theme }) => theme.fontWeight.bold};
+  color: ${({ theme }) => theme.colors.primary[600]};
+  overflow: hidden;
   
   img {
     width: 100%;
@@ -99,39 +100,24 @@ const UserAvatar = styled.div`
 `;
 
 const UserDetails = styled.div`
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
 `;
 
 const UserName = styled.div`
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.text.primary};
-  font-size: ${({ theme }) => theme.fontSize.base};
+  font-size: ${({ theme }) => theme.fontSize.lg};
+  font-weight: ${({ theme }) => theme.fontWeight.semibold};
 `;
 
 const UserEmail = styled.div`
   font-size: ${({ theme }) => theme.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin-top: 2px;
-`;
-
-const LogoutButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: ${({ theme }) => theme.spacing.sm};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: ${({ theme }) => theme.colors.gray[100]};
-    color: ${({ theme }) => theme.colors.error.main};
-  }
+  opacity: 0.8;
 `;
 
 const QuickActionsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: ${({ theme }) => theme.spacing.lg};
   margin-bottom: ${({ theme }) => theme.spacing.xl};
 `;
@@ -139,22 +125,12 @@ const QuickActionsGrid = styled.div`
 const QuickActionCard = styled(Card)`
   cursor: pointer;
   transition: all ${({ theme }) => theme.transitions.base};
-  position: relative;
-  overflow: hidden;
+  border: 2px solid transparent;
   
   &:hover {
     transform: translateY(-4px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
-  }
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: ${({ $color }) => $color};
+    border-color: ${({ $color, theme }) => theme.colors[$color][500]};
   }
 `;
 
@@ -162,8 +138,8 @@ const QuickActionIcon = styled.div`
   width: 48px;
   height: 48px;
   border-radius: ${({ theme }) => theme.borderRadius.lg};
-  background: ${({ $color }) => `${$color}20`};
-  color: ${({ $color }) => $color};
+  background: ${({ $color, theme }) => theme.colors[$color][100]};
+  color: ${({ $color, theme }) => theme.colors[$color][600]};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -173,7 +149,6 @@ const QuickActionIcon = styled.div`
 const QuickActionTitle = styled.h3`
   font-size: ${({ theme }) => theme.fontSize.lg};
   font-weight: ${({ theme }) => theme.fontWeight.semibold};
-  color: ${({ theme }) => theme.colors.text.primary};
   margin: 0 0 ${({ theme }) => theme.spacing.xs};
 `;
 
@@ -185,47 +160,25 @@ const QuickActionDescription = styled.p`
 
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
 `;
 
 const StatCard = styled(Card)`
-  cursor: pointer;
-  transition: all ${({ theme }) => theme.transitions.base};
-  
-  &:hover {
-    transform: translateY(-4px);
-  }
+  padding: ${({ theme }) => theme.spacing.lg};
 `;
 
 const StatHeader = styled.div`
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: ${({ theme }) => theme.spacing.md};
+  align-items: flex-start;
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
 `;
 
-const StatTitle = styled.h3`
-  font-size: ${({ theme }) => theme.fontSize.base};
-  font-weight: ${({ theme }) => theme.fontWeight.medium};
+const StatTitle = styled.div`
+  font-size: ${({ theme }) => theme.fontSize.sm};
   color: ${({ theme }) => theme.colors.text.secondary};
-  margin: 0;
-`;
-
-const StatBadge = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
-  background: ${({ $trend }) => 
-    $trend === 'up' ? 'rgba(34, 197, 94, 0.1)' : 
-    $trend === 'down' ? 'rgba(239, 68, 68, 0.1)' : 
-    'rgba(107, 114, 128, 0.1)'};
-  color: ${({ $trend }) => 
-    $trend === 'up' ? '#22c55e' : 
-    $trend === 'down' ? '#ef4444' : '#6b7280'};
-  border-radius: ${({ theme }) => theme.borderRadius.full};
-  font-size: ${({ theme }) => theme.fontSize.xs};
   font-weight: ${({ theme }) => theme.fontWeight.medium};
 `;
 
@@ -236,74 +189,27 @@ const StatValue = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.xs};
 `;
 
-const StatDescription = styled.div`
-  font-size: ${({ theme }) => theme.fontSize.sm};
+const StatChange = styled.div`
+  font-size: ${({ theme }) => theme.fontSize.xs};
   color: ${({ theme }) => theme.colors.text.secondary};
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
 `;
 
-
-const ChartContainer = styled.div`
-  height: 320px;
-  padding: ${({ theme }) => theme.spacing.md};
-  overflow: hidden; /* Add this to prevent overflow */
-  position: relative; /* Add this for better containment */
-  
-  /* Ensure ResponsiveContainer fits properly */
-  .recharts-responsive-container {
-    max-height: 100% !important;
-    overflow: hidden !important;
-  }
-`;
-
-// Also update ProgressCard to handle overflow better
-const ProgressCard = styled(Card)`
-  position: relative;
-  overflow: hidden; /* Change from 'visible' to 'hidden' */
-  height: fit-content; /* Add this to prevent infinite height */
-  max-height: 480px; /* Add max height constraint */
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(135deg, 
-      ${({ theme }) => theme.colors.primary[500]} 0%, 
-      ${({ theme }) => theme.colors.primary[600]} 100%);
-    border-radius: ${({ theme }) => theme.borderRadius.lg};
-    z-index: -1;
-    opacity: 0;
-    transition: opacity ${({ theme }) => theme.transitions.base};
-  }
-  
-  &:hover::before {
-    opacity: 0.1;
-  }
-`;
-
-
-const ChartsSection = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: ${({ theme }) => theme.spacing.lg};
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
-  
-  @media (max-width: ${({ theme }) => theme.breakpoints.lg}) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const ChartCard = styled(Card)`
-  min-height: 400px;
-`;
-
-const SectionTitle = styled.h2`
-  font-size: ${({ theme }) => theme.fontSize.xl};
-  font-weight: ${({ theme }) => theme.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0 0 ${({ theme }) => theme.spacing.lg};
+const StatBadge = styled.div`
+  display: flex;
+  align-items: center;
+  padding: ${({ theme }) => theme.spacing.xs};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  background: ${({ $trend, theme }) => 
+    $trend === 'up' ? theme.colors.success.light :
+    $trend === 'down' ? theme.colors.error.light :
+    theme.colors.gray[100]};
+  color: ${({ $trend, theme }) => 
+    $trend === 'up' ? theme.colors.success.main :
+    $trend === 'down' ? theme.colors.error.main :
+    theme.colors.gray[600]};
 `;
 
 // Dashboard component
@@ -316,6 +222,45 @@ const Dashboard = () => {
   const weeklyGoals = useSelector(selectWeeklyGoals);
   const activityHistory = useSelector(selectActivityHistory);
   const [loading, setLoading] = useState(true);
+  
+  // ADD THESE MISSING STATE VARIABLES
+  const [profileImageUrl, setProfileImageUrl] = useState(null);
+  const [imageError, setImageError] = useState(false);
+
+  // MOVE HELPER FUNCTIONS BEFORE THEY'RE USED
+  // Helper function to get user initials
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+    return parts[0].substring(0, 2).toUpperCase();
+  };
+
+  // Helper function to format study time - MOVE THIS BEFORE stats ARRAY
+  const formatStudyTime = (minutes) => {
+    if (!minutes) return '0m';
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  };
+
+  // Set profile image URL on component mount
+  useEffect(() => {
+    if (user?.photoUrl && !imageError) {
+      setProfileImageUrl(user.photoUrl);
+    } else if (user?.photoURL && !imageError) {
+      setProfileImageUrl(user.photoURL);
+    } else if (user?.name) {
+      // Generate avatar URL from initials
+      const initials = getInitials(user.name);
+      setProfileImageUrl(
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=10b981&color=fff`
+      );
+    }
+  }, [user, imageError]);
 
   // Animated values with fallbacks
   const animatedAccuracy = useAnimatedValue(0, overview?.overallAccuracy || 0, { duration: 2000 });
@@ -340,99 +285,85 @@ const Dashboard = () => {
     loadDashboardData();
   }, [dispatch]);
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
-  };
-
+  // Quick actions data
   const quickActions = [
     {
       id: 'quick-practice',
       title: 'Quick Practice',
-      description: '10 adaptive questions',
+      description: '10 random questions',
       icon: Zap,
-      color: '#10b981',
+      color: 'primary',
       action: () => navigate('/app/practice?mode=quick')
     },
     {
       id: 'srs-review',
       title: 'SRS Review',
-      description: `${overview?.srsCount || 5} questions due`,
+      description: `${overview?.srssDue || 0} cards due`,
       icon: Brain,
-      color: '#3b82f6',
+      color: 'success',
       action: () => navigate('/app/srs-review')
     },
     {
       id: 'mock-exam',
       title: 'Mock Exam',
-      description: 'Full-length test',
-      icon: Target,
-      color: '#8b5cf6',
+      description: 'Full 75-question test',
+      icon: BookOpen,
+      color: 'warning',
       action: () => navigate('/app/mock-exams')
     },
     {
-      id: 'study-plan',
-      title: 'Study Plan',
-      description: 'Personalized schedule',
-      icon: Calendar,
-      color: '#f59e0b',
-      action: () => navigate('/app/study-plan')
+      id: 'weak-areas',
+      title: 'Weak Areas',
+      description: 'Focus on improvements',
+      icon: Target,
+      color: 'error',
+      action: () => navigate('/app/practice?mode=weak')
     }
   ];
 
+  // Stats data - NOW formatStudyTime IS DEFINED ABOVE
   const stats = [
     {
       title: 'Overall Accuracy',
       value: `${Math.round(animatedAccuracy)}%`,
-      description: 'Across all subjects',
-      trend: overview?.accuracyTrend || 'up',
-      change: '+2.3%',
       icon: Target,
-      color: '#22c55e'
+      trend: overview?.accuracyTrend || 'neutral',
+      change: overview?.accuracyChange || '0%'
     },
     {
       title: 'Questions Answered',
       value: Math.round(animatedQuestions).toLocaleString(),
-      description: 'Total practice questions',
+      icon: Activity,
       trend: 'up',
-      change: '+12',
-      icon: BookOpen,
-      color: '#3b82f6'
+      change: `+${overview?.questionsToday || 0} today`
     },
     {
       title: 'Current Streak',
       value: `${Math.round(animatedStreak)} days`,
-      description: 'Keep it going!',
-      trend: animatedStreak > 0 ? 'up' : 'neutral',
-      change: animatedStreak > 0 ? '+1' : '0',
       icon: Star,
-      color: '#f59e0b'
+      trend: overview?.currentStreak > 0 ? 'up' : 'neutral',
+      change: overview?.currentStreak > 0 ? 'Keep it up!' : 'Start today!'
     },
     {
       title: 'Study Time',
-      value: `${overview?.weeklyStudyTime || 0}h`,
-      description: 'This week',
-      trend: 'up',
-      change: '+2.5h',
+      value: formatStudyTime(overview?.totalStudyTime || 0), // NOW THIS WORKS
       icon: Clock,
-      color: '#8b5cf6'
+      trend: 'up',
+      change: `${formatStudyTime(overview?.todayStudyTime || 0)} today`
     }
   ];
 
   if (loading) {
-    return <Loader fullScreen text="Loading your dashboard..." />;
+    return <Loader fullScreen />;
   }
 
-  // ✅ FIXED: Return ONLY the dashboard content, NO Layout wrapper
   return (
     <DashboardContainer>
       {/* Welcome Section */}
       <WelcomeSection>
         <WelcomeContent>
           <WelcomeTitle>
-            {getGreeting()}, <span>{user?.name || 'Student'}</span>! 👋
+            Welcome back, {user?.name?.split(' ')[0] || 'Guest'} 👋
           </WelcomeTitle>
           <WelcomeSubtitle>
             {user?.isGuest 
@@ -445,26 +376,25 @@ const Dashboard = () => {
         
         {/* User Profile Display */}
         {user && !user.isGuest && (
-          
-        <UserProfileContainer>
-              <UserAvatar>
-                {profileImageUrl ? (
-                  <img 
-                    src={profileImageUrl}
-                    alt={user?.name || 'Profile'}
-                    onError={() => setImageError(true)}
-                  />
-                ) : (
-                  <span style={{ color: 'white', fontWeight: '600' }}>
-                    {getInitials(user?.name)}
-                  </span>
-                )}
-              </UserAvatar>
-              <UserDetails>
-                <UserName>{user?.name || 'User'}</UserName>
-                <UserEmail>{user?.email || 'user@example.com'}</UserEmail>
-              </UserDetails>
-            </UserProfileContainer>
+          <UserProfileContainer>
+            <UserAvatar>
+              {profileImageUrl ? (
+                <img 
+                  src={profileImageUrl}
+                  alt={user?.name || 'Profile'}
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <span style={{ color: 'white', fontWeight: '600' }}>
+                  {getInitials(user?.name)}
+                </span>
+              )}
+            </UserAvatar>
+            <UserDetails>
+              <UserName>{user?.name || 'User'}</UserName>
+              <UserEmail>{user?.email || 'user@example.com'}</UserEmail>
+            </UserDetails>
+          </UserProfileContainer>
         )}
       </WelcomeSection>
 
@@ -501,37 +431,20 @@ const Dashboard = () => {
                     <ArrowUpRight size={12} />
                   ) : stat.trend === 'down' ? (
                     <ArrowDownRight size={12} />
-                  ) : (
-                    <Activity size={12} />
-                  )}
-                  {stat.change}
+                  ) : null}
                 </StatBadge>
               </StatHeader>
               <StatValue>{stat.value}</StatValue>
-              <StatDescription>{stat.description}</StatDescription>
+              <StatChange>
+                <IconComponent size={14} />
+                {stat.change}
+              </StatChange>
             </StatCard>
           );
         })}
       </StatsGrid>
 
-      {/* Charts Section */}
-      <ChartsSection>
-        <ChartCard>
-          <SectionTitle>Performance Overview</SectionTitle>
-          <PerformanceChart data={activityHistory} />
-        </ChartCard>
-        
-        <ChartCard>
-          <SectionTitle>Subject Progress</SectionTitle>
-          <SubjectRadarChart data={subjectProgress} />
-        </ChartCard>
-      </ChartsSection>
-
-      {/* Weekly Activity Chart */}
-      <ChartCard>
-        <SectionTitle>Weekly Activity</SectionTitle>
-        <WeeklyActivityChart data={activityHistory} />
-      </ChartCard>
+      {/* Add more sections as needed */}
     </DashboardContainer>
   );
 };

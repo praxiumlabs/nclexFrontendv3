@@ -1,5 +1,5 @@
 // src/hooks/useAuth.js
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux'; // ADD useDispatch import
 import { useNavigate } from 'react-router-dom';
 import { useCallback, useEffect } from 'react';
 import {
@@ -19,7 +19,7 @@ import {
 import { showSuccessToast, showErrorToast } from '../store/slices/uiSlice';
 
 export const useAuth = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch(); // Now useDispatch is properly imported
   const navigate = useNavigate();
   const auth = useSelector(selectAuth);
   const user = useSelector(selectUser);
@@ -37,7 +37,36 @@ export const useAuth = () => {
     return isGuest && !!guestUser;
   }, [dispatch, user]);
 
-  // Load user profile on mount if authenticated (but not for guests)
+  // Initialize auth - ONLY ONE DEFINITION
+  const initializeAuth = useCallback(() => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const storedUser = localStorage.getItem('user');
+      const guestMode = localStorage.getItem('guestMode');
+      
+      if (token && storedUser) {
+        const user = JSON.parse(storedUser);
+        dispatch(setUser(user));
+        // If you have setAccessToken action, uncomment:
+        // dispatch(setAccessToken(token));
+        return true;
+      } else if (guestMode === 'true') {
+        const guestUser = localStorage.getItem('guestUser');
+        if (guestUser) {
+          dispatch(setUser(JSON.parse(guestUser)));
+          return true;
+        }
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Failed to initialize auth:', error);
+      localStorage.clear();
+      return false;
+    }
+  }, [dispatch]);
+
+  // Load user profile on mount if authenticated
   useEffect(() => {
     if (isAuthenticated && !user && !checkGuestMode()) {
       dispatch(getProfile());
@@ -62,7 +91,7 @@ export const useAuth = () => {
     }
   }, [dispatch, navigate]);
 
-  // Register function
+  // Register function  
   const register = useCallback(async (userData) => {
     try {
       const result = await dispatch(registerAction(userData)).unwrap();
@@ -74,6 +103,9 @@ export const useAuth = () => {
       throw error;
     }
   }, [dispatch, navigate]);
+
+  // Add registerUser as an alias
+  const registerUser = register;
 
   // Guest login function
   const loginAsGuest = useCallback(() => {
@@ -96,10 +128,9 @@ export const useAuth = () => {
   }, [dispatch, navigate]);
 
   // Logout function
-// 4. FIX: Logout method to clear all data
   const logout = useCallback(async () => {
     try {
-      // ✅ CLEAR ALL auth data
+      // Clear all auth data
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       localStorage.removeItem('guestMode');
@@ -112,7 +143,6 @@ export const useAuth = () => {
       
       // Clear Redux state
       dispatch(clearAuth());
-      
       dispatch(showSuccessToast('Logged out successfully.'));
       navigate('/login');
     } catch (error) {
@@ -162,13 +192,13 @@ export const useAuth = () => {
     dispatch(clearError());
   }, [dispatch]);
 
-  // Check if user has specific role (always false for guests)
+  // Check if user has specific role
   const hasRole = useCallback((role) => {
     if (user?.isGuest) return false;
     return user?.roles?.includes(role) || false;
   }, [user]);
 
-  // Check if user has specific permission (always false for guests)
+  // Check if user has specific permission
   const hasPermission = useCallback((permission) => {
     if (user?.isGuest) return false;
     return user?.permissions?.includes(permission) || false;
@@ -195,11 +225,11 @@ export const useAuth = () => {
     return firstName;
   }, [user]);
 
-  // ✅ ADD: setAuthData method for Google auth
+  // Set auth data (for external auth like Google)
   const setAuthData = useCallback(({ token, user }) => {
     console.log('Setting auth data:', { token, user });
     
-    // ✅ CLEAR any existing guest data first
+    // Clear any existing guest data first
     localStorage.removeItem('guestMode');
     localStorage.removeItem('guestUser');
     
@@ -213,55 +243,26 @@ export const useAuth = () => {
     // Show success message with actual user name
     dispatch(showSuccessToast(`Welcome back, ${user.name || 'User'}!`));
   }, [dispatch]);
-    // ✅ ADD: initializeAuth method
-    // 3. FIX: initializeAuth method to handle the data correctly
-    const initializeAuth = useCallback(() => {
-    const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('user');
-    
-    if (token && userData) {
-      try {
-        const user = JSON.parse(userData);
-        dispatch(setUser(user));
-        console.log('Auth initialized from localStorage:', user);
-        return true;
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-      }
-    }
-    
-    // ✅ If no auth token, check guest mode separately
-    return checkGuestMode();
-  }, [dispatch, checkGuestMode]);
-
-  // Check if user is guest
-  const isGuest = user?.isGuest || checkGuestMode();
-  const isAuthenticatedOrGuest = isAuthenticated || checkGuestMode();
 
   return {
     // State
     user,
-    isAuthenticated: isAuthenticatedOrGuest,
-    isGuest,
+    isAuthenticated,
     loading: auth.loading,
     error: auth.error,
-    profileLoading: auth.profileLoading,
-    profileError: auth.profileError,
+    isGuest: user?.isGuest || false,
     
     // Actions
     login,
     register,
+    registerUser, // Alias for register
     loginAsGuest,
     logout,
     updateProfile,
     changePassword,
     clearAuthError,
-    
-    // ✅ Google auth methods
-    setAuthData,
     initializeAuth,
+    setAuthData,
     
     // Utilities
     hasRole,

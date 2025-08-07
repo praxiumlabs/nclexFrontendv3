@@ -1,204 +1,103 @@
-// src/services/auth.service.js
 import { apiClient, API_ENDPOINTS } from './api';
 
-class AuthService {
-  // Login user
-  async login(credentials) {
+class QuestionService {
+  // Get questions with filters
+  async getQuestions(params = {}) {
     try {
-      const response = await apiClient.post(API_ENDPOINTS.auth.login, credentials);
-      const { accessToken, refreshToken, user } = response.data;
-      
-      // Store tokens
-      this.setTokens({ accessToken, refreshToken });
-      
-      return {
-        accessToken,
-        refreshToken,
-        user,
-      };
+      const response = await apiClient.get(API_ENDPOINTS.questions.list, params);
+      return response.data;
     } catch (error) {
       throw this.handleError(error);
     }
   }
-  
-  // Register new user
-  async register(userData) {
+
+  // Get question by ID
+  async getQuestionById(id) {
     try {
-      const response = await apiClient.post(API_ENDPOINTS.auth.register, userData);
-      const { accessToken, refreshToken, user } = response.data;
-      
-      // Store tokens
-      this.setTokens({ accessToken, refreshToken });
-      
-      return {
-        accessToken,
-        refreshToken,
-        user,
-      };
+      const response = await apiClient.get(API_ENDPOINTS.questions.getById(id));
+      return response.data;
     } catch (error) {
       throw this.handleError(error);
     }
   }
-  
-  // Logout user
-  async logout() {
+
+  // Get questions by subject
+  async getQuestionsBySubject(subjectId, params = {}) {
     try {
-      await apiClient.post(API_ENDPOINTS.auth.logout);
+      const response = await apiClient.get(
+        API_ENDPOINTS.questions.bySubject(subjectId),
+        params
+      );
+      return response.data;
     } catch (error) {
-      // Continue with logout even if API call fails
-      console.error('Logout API error:', error);
-    } finally {
-      // Clear tokens
-      this.clearTokens();
+      throw this.handleError(error);
     }
   }
-  
-  // Refresh access token
-  async refreshAccessToken(refreshToken) {
+
+  // Get questions by chapter
+  async getQuestionsByChapter(chapterId, params = {}) {
     try {
-      const response = await apiClient.post(API_ENDPOINTS.auth.refresh, {
-        refreshToken,
+      const response = await apiClient.get(
+        API_ENDPOINTS.questions.byChapter(chapterId),
+        params
+      );
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Search questions
+  async searchQuestions(query, params = {}) {
+    try {
+      const response = await apiClient.get(API_ENDPOINTS.questions.search, {
+        q: query,
+        ...params
       });
-      
-      const { accessToken, refreshToken: newRefreshToken } = response.data;
-      
-      // Update tokens
-      this.setTokens({ 
-        accessToken, 
-        refreshToken: newRefreshToken || refreshToken 
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Get SRS due questions
+  async getSRSDueQuestions() {
+    try {
+      const response = await apiClient.get(API_ENDPOINTS.srs.due);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Submit SRS review
+  async submitSRSReview(questionId, rating) {
+    try {
+      const response = await apiClient.post(API_ENDPOINTS.srs.review, {
+        questionId,
+        rating
       });
-      
-      return {
-        accessToken,
-        refreshToken: newRefreshToken || refreshToken,
-      };
-    } catch (error) {
-      // Clear tokens on refresh failure
-      this.clearTokens();
-      throw this.handleError(error);
-    }
-  }
-  
-  // Get user profile
-  async getProfile() {
-    try {
-      const response = await apiClient.get(API_ENDPOINTS.auth.profile);
       return response.data;
     } catch (error) {
       throw this.handleError(error);
     }
   }
-  
-  // Update user profile
-  async updateProfile(profileData) {
-    try {
-      const response = await apiClient.put(API_ENDPOINTS.auth.updateProfile, profileData);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-  
-  // Change password
-  async changePassword(passwordData) {
-    try {
-      const response = await apiClient.post(API_ENDPOINTS.auth.changePassword, passwordData);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-  
-  // Request password reset
-  async forgotPassword(email) {
-    try {
-      const response = await apiClient.post(API_ENDPOINTS.auth.forgotPassword, { email });
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-  
-  // Reset password with token
-  async resetPassword(resetData) {
-    try {
-      const response = await apiClient.post(API_ENDPOINTS.auth.resetPassword, resetData);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-  
-  // Verify email address
-  async verifyEmail(token) {
-    try {
-      const response = await apiClient.post(API_ENDPOINTS.auth.verifyEmail, { token });
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-  
-  // Token management methods
-  setTokens({ accessToken, refreshToken }) {
-    if (accessToken) {
-      localStorage.setItem('accessToken', accessToken);
-    }
-    if (refreshToken) {
-      localStorage.setItem('refreshToken', refreshToken);
-    }
-  }
-  
-  getTokens() {
-    return {
-      accessToken: localStorage.getItem('accessToken'),
-      refreshToken: localStorage.getItem('refreshToken'),
-    };
-  }
-  
-  clearTokens() {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-  }
-  
-  // Check if user is authenticated
-  isAuthenticated() {
-    const { accessToken } = this.getTokens();
-    return !!accessToken;
-  }
-  
+
   // Error handler
   handleError(error) {
     if (error.response) {
-      // Server error response
       const { status, data } = error.response;
-      
       switch (status) {
-        case 400:
-          return new Error(data.message || 'Invalid request');
-        case 401:
-          return new Error('Invalid credentials');
-        case 403:
-          return new Error('Access forbidden');
         case 404:
-          return new Error('Resource not found');
-        case 409:
-          return new Error(data.message || 'Conflict occurred');
-        case 422:
-          return new Error(data.message || 'Validation failed');
-        case 500:
-          return new Error('Server error. Please try again later.');
+          return new Error('Question not found');
+        case 403:
+          return new Error('You do not have permission to access this question');
         default:
           return new Error(data.message || 'An error occurred');
       }
-    } else if (error.request) {
-      // Network error
-      return new Error('Network error. Please check your connection.');
-    } else {
-      // Other errors
-      return error;
     }
+    return error;
   }
 }
 
-export default new AuthService();
+export default new QuestionService();
