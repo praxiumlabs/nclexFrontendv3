@@ -10,6 +10,11 @@ import {
 import { Button } from '../../components/common/Button/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
+import { UserCheck } from 'lucide-react';
+
+
+
+
 
 // Styled components
 const AuthContainer = styled.div`
@@ -386,6 +391,20 @@ const Login = () => {
     // Implement GitHub OAuth
     window.location.href = '/api/auth/github';
   };
+  // Add this function to your Login component (before the return statement)
+  const handleGuestLogin = () => {
+    // Set guest mode in localStorage
+    localStorage.setItem('guestMode', 'true');
+    localStorage.setItem('guestUser', JSON.stringify({
+      id: 'guest-user',
+      name: 'Guest User',
+      email: 'guest@example.com',
+      isGuest: true
+    }));
+    
+    // Navigate to dashboard
+    navigate('/app/dashboard');
+  };
 
   return (
     <AuthContainer>
@@ -506,6 +525,17 @@ const Login = () => {
               <DividerText>OR</DividerText>
             </Divider>
 
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              fullWidth
+              leftIcon={<UserCheck size={20} />}
+              onClick={handleGuestLogin}
+              style={{ marginTop: '16px' }}
+            >
+              Continue as Guest
+            </Button>
             <SocialButtons>
               <SocialButton type="button" onClick={handleGoogleLogin}>
                 <img 

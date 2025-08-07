@@ -1,14 +1,15 @@
 // src/pages/Practice/Practice.jsx
+import { X } from 'lucide-react';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 import { 
-  Check, X, ChevronLeft, ChevronRight, Clock, BookOpen, 
+  Check, ChevronLeft, ChevronRight, Clock, BookOpen, 
   AlertCircle, Lightbulb, Flag, Volume2, VolumeX, 
   SkipForward, RotateCcw, Eye, EyeOff, Maximize2
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { FullScreenLayout } from '../../components/layout/Layout/Layout';
+import { FullScreenLayout } from '../../components/layout/layout/layout';
 import { Card } from '../../components/common/Card/Card';
 import { Button } from '../../components/common/Button/Button';
 import { Modal } from '../../components/common/Modal/Modal';
@@ -320,8 +321,7 @@ const Practice = () => {
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showHint, setShowHint] = useState(false);
-  const [showRationale, setShowRationaleModal] = useState(false);
-
+  const [showRationaleModal, setShowRationaleModal] = useState(false);
   // Load exam session on mount
   useEffect(() => {
     const mode = searchParams.get('mode') || 'quick';

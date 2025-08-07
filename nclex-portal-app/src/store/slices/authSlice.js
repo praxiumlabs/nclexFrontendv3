@@ -4,14 +4,20 @@ import authService from '../../services/auth.service';
 
 // Initial state
 const initialState = {
-  user: null,
-  accessToken: localStorage.getItem('accessToken'),
-  refreshToken: localStorage.getItem('refreshToken'),
-  isAuthenticated: !!localStorage.getItem('accessToken'),
-  loading: false,
-  error: null,
-  profileLoading: false,
-  profileError: null,
+  user: (() => {
+    // Check for guest mode on initialization
+    const isGuest = localStorage.getItem('guestMode') === 'true';
+    const guestUser = localStorage.getItem('guestUser');
+    if (isGuest && guestUser) {
+      return JSON.parse(guestUser);
+    }
+    return null;
+  })(),
+  isAuthenticated: (() => {
+    const token = localStorage.getItem('accessToken');
+    const isGuest = localStorage.getItem('guestMode') === 'true';
+    return !!token || isGuest;
+  })(),
 };
 
 // Async thunks

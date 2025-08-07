@@ -1,4 +1,4 @@
-// src/components/layout/Layout/Layout.jsx
+// src/components/layout/layout/layout.jsx
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import styled, { css } from 'styled-components';
@@ -6,6 +6,104 @@ import { Navigation } from '../Navigation/Navigation';
 import { Sidebar } from '../Sidebar/Sidebar';
 import { Footer } from '../Footer/Footer';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
+import { useAuth } from '../../../hooks/useAuth';
+
+// Guest Banner Component
+const GuestBannerContainer = styled.div`
+  background: linear-gradient(135deg, 
+    ${({ theme }) => theme.colors.warning.light} 0%, 
+    ${({ theme }) => theme.colors.warning.main} 100%);
+  color: ${({ theme }) => theme.colors.warning.dark};
+  padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.lg}`};
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  font-weight: ${({ theme }) => theme.fontWeight.medium};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    flex-direction: column;
+    gap: ${({ theme }) => theme.spacing.sm};
+    text-align: center;
+  }
+`;
+
+const GuestBannerContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const GuestBannerActions = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.sm};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    width: 100%;
+    justify-content: center;
+  }
+`;
+
+const GuestBannerButton = styled.button`
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.md}`};
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  font-weight: ${({ theme }) => theme.fontWeight.medium};
+  cursor: pointer;
+  transition: all ${({ theme }) => theme.transitions.fast};
+  
+  ${({ $variant }) => $variant === 'primary' 
+    ? css`
+        background: ${({ theme }) => theme.colors.primary[500]};
+        color: white;
+        
+        &:hover {
+          background: ${({ theme }) => theme.colors.primary[600]};
+        }
+      `
+    : css`
+        background: transparent;
+        color: ${({ theme }) => theme.colors.warning.dark};
+        border: 1px solid ${({ theme }) => theme.colors.warning.dark};
+        
+        &:hover {
+          background: ${({ theme }) => theme.colors.warning.dark};
+          color: white;
+        }
+      `
+  }
+`;
+
+// Guest Banner Component
+const GuestBanner = () => {
+  const handleSignIn = () => {
+    window.location.href = '/login';
+  };
+
+  const handleSignUp = () => {
+    window.location.href = '/register';
+  };
+
+  return (
+    <GuestBannerContainer>
+      <GuestBannerContent>
+        <span>👤</span>
+        <span>You're browsing as a guest. Sign up to save your progress!</span>
+      </GuestBannerContent>
+      
+      <GuestBannerActions>
+        <GuestBannerButton onClick={handleSignIn}>
+          Sign In
+        </GuestBannerButton>
+        <GuestBannerButton $variant="primary" onClick={handleSignUp}>
+          Sign Up Free
+        </GuestBannerButton>
+      </GuestBannerActions>
+    </GuestBannerContainer>
+  );
+};
 
 // Styled components
 const LayoutContainer = styled.div`
@@ -144,6 +242,7 @@ export const Layout = ({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useMediaQuery('(max-width: 1024px)');
+  const { isGuest } = useAuth();
 
   const handleSidebarToggle = () => {
     if (isMobile) {
@@ -156,6 +255,10 @@ export const Layout = ({
   return (
     <LayoutContainer>
       <LoadingBar $loading={loading} />
+      
+      {/* Show guest banner if in guest mode */}
+      {isGuest && <GuestBanner />}
+      
       <Navigation />
       
       <MainWrapper>
