@@ -10,6 +10,9 @@ import {
 import { Button } from '../../components/common/Button/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
+import { Loader } from '../../components/common/Loader/Loader';
+import { useGoogleAuth } from '../../hooks/useGoogleAuth';
+
 
 // Styled components
 const AuthContainer = styled.div`
@@ -457,8 +460,14 @@ const Register = () => {
     }
   };
 
-  const handleGoogleSignup = () => {
-    window.location.href = '/api/auth/google';
+  const handleGoogleSignup = async () => {
+    try {
+      await signInWithGoogle();
+      navigate('/app/dashboard');
+    } catch (error) {
+      console.error('Google signup failed:', error);
+      // Error is already handled by the hook
+    }
   };
 
   const handleGithubSignup = () => {
@@ -681,15 +690,33 @@ const Register = () => {
             </Divider>
 
             <SocialButtons>
-              <SocialButton type="button" onClick={handleGoogleSignup}>
+            <SocialButton 
+              type="button" 
+              onClick={handleGoogleSignup}
+              disabled={googleLoading || loading}
+            >
+              {googleLoading ? (
+                <Loader size={20} />
+              ) : (
                 <img 
                   src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
                   alt="Google" 
                   width="20" 
                   height="20" 
                 />
-                Sign up with Google
-              </SocialButton>
+              )}
+              Sign up with Google
+            </SocialButton>
+
+            // Add error display for Google auth errors:
+            // Add this after your existing error display in the Register component:
+
+            {googleError && (
+              <ErrorMessage>
+                <AlertCircle size={16} />
+                {googleError}
+              </ErrorMessage>
+            )}
               
               <SocialButton type="button" onClick={handleGithubSignup}>
                 <Github size={20} />

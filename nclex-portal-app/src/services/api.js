@@ -184,6 +184,8 @@ export const API_ENDPOINTS = {
     forgotPassword: '/auth/forgot-password',
     resetPassword: '/auth/reset-password',
     verifyEmail: '/auth/verify-email',
+    googleLogin: '/auth/google/login',
+    googleCallback: '/auth/google/callback',
   },
   
   // User endpoints

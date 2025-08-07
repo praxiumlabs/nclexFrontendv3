@@ -52,6 +52,26 @@ class AuthService {
       this.clearTokens();
     }
   }
+  async googleLogin(googleToken) {
+    try {
+      const response = await apiClient.post(API_ENDPOINTS.auth.googleLogin, {
+        token: googleToken
+      });
+      
+      const { accessToken, refreshToken, user } = response.data;
+      
+      // Store tokens
+      this.setTokens({ accessToken, refreshToken });
+      
+      return {
+        accessToken,
+        refreshToken,
+        user,
+      };
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
   
   // Refresh access token
   async refreshAccessToken(refreshToken) {

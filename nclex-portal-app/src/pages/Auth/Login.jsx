@@ -11,6 +11,8 @@ import { Button } from '../../components/common/Button/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { UserCheck } from 'lucide-react';
+import { useGoogleAuth } from '../../hooks/useGoogleAuth';
+import { Loader } from '../../components/common/Loader/Loader';
 
 
 
@@ -350,7 +352,10 @@ const Login = () => {
   const { theme } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const { signInWithGoogle, loading: googleLoading, error: googleError } = useGoogleAuth();
 
+
+  
   const {
     register,
     handleSubmit,
@@ -382,9 +387,14 @@ const Login = () => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    // Implement Google OAuth
-    window.location.href = '/api/auth/google';
+  const handleGoogleLogin = async () => {
+    try {
+      await signInWithGoogle();
+      navigate('/app/dashboard');
+    } catch (error) {
+      console.error('Google login failed:', error);
+      // Error is already handled by the hook
+    }
   };
 
   const handleGithubLogin = () => {
@@ -537,15 +547,33 @@ const Login = () => {
               Continue as Guest
             </Button>
             <SocialButtons>
-              <SocialButton type="button" onClick={handleGoogleLogin}>
+            <SocialButton 
+              type="button" 
+              onClick={handleGoogleLogin}
+              disabled={googleLoading || loading}
+            >
+              {googleLoading ? (
+                <Loader size={20} />
+              ) : (
                 <img 
                   src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
                   alt="Google" 
                   width="20" 
                   height="20" 
                 />
-                Continue with Google
-              </SocialButton>
+              )}
+              Continue with Google
+            </SocialButton>
+
+            // Add error display for Google auth errors:
+            // Add this after your existing error display in the Login component:
+
+            {googleError && (
+              <ErrorMessage>
+                <AlertCircle size={16} />
+                {googleError}
+              </ErrorMessage>
+            )}
               
               <SocialButton type="button" onClick={handleGithubLogin}>
                 <Github size={20} />
