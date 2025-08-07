@@ -382,41 +382,51 @@ const Dashboard = () => {
     <Layout>
       <DashboardContainer>
         {/* Welcome Section */}
-        <WelcomeSection>
-          <WelcomeContent>
-            <WelcomeTitle>
-              {getGreeting()}, <span>{user?.name || 'Student'}</span>! 👋
-            </WelcomeTitle>
-            <WelcomeSubtitle>
-              {overview?.currentStreak > 0 
-                ? `You're on a ${overview.currentStreak} day streak! Keep it up!`
-                : 'Ready to start your study session?'}
-            </WelcomeSubtitle>
-          </WelcomeContent>
-          
-          {/* User Profile Display */}
-          {user && !user.isGuest && (
-            <UserProfileContainer>
-              <UserAvatar>
-                {user.photoUrl ? (
-                  <img src={user.photoUrl} alt={user.name} />
-                ) : (
-                  <User size={20} color="white" />
-                )}
-              </UserAvatar>
-              
-              <UserDetails>
-                <UserName>{user.name}</UserName>
-                <UserEmail>{user.email}</UserEmail>
-              </UserDetails>
-              
-              <LogoutButton onClick={logout}>
-                <LogOut size={16} />
-              </LogoutButton>
-            </UserProfileContainer>
-          )}
-        </WelcomeSection>
-
+          <WelcomeSection>
+            <WelcomeContent>
+              <WelcomeTitle>
+                {getGreeting()}, <span>{user?.name || 'Student'}</span>! 👋
+              </WelcomeTitle>
+              <WelcomeSubtitle>
+                {user?.isGuest 
+                  ? 'You\'re browsing as a guest. Sign up for the full experience!'
+                  : overview?.currentStreak > 0 
+                    ? `You're on a ${overview.currentStreak} day streak! Keep it up!`
+                    : 'Ready to start your study session?'}
+              </WelcomeSubtitle>
+            </WelcomeContent>
+            
+            {/* User Profile Display */}
+            {user && !user.isGuest && (
+              <UserProfileContainer>
+                <UserAvatar>
+                  {user.photoUrl ? (
+                    <img 
+                      src={user.photoUrl} 
+                      alt={user.name} 
+                      onError={(e) => {
+                        // Fallback if image fails to load
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div style={{ display: user.photoUrl ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+                    <User size={20} color="white" />
+                  </div>
+                </UserAvatar>
+                
+                <UserDetails>
+                  <UserName>{user.name || 'Unknown User'}</UserName>
+                  <UserEmail>{user.email || 'No email'}</UserEmail>
+                </UserDetails>
+                
+                <LogoutButton onClick={logout} title="Logout">
+                  <LogOut size={16} />
+                </LogoutButton>
+              </UserProfileContainer>
+            )}
+          </WelcomeSection>
         {/* Quick Actions */}
         <QuickActionsGrid>
           {quickActions.map((action) => {

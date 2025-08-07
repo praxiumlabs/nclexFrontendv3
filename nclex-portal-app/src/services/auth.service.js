@@ -55,12 +55,16 @@ class AuthService {
     try {
       console.log('Sending Google token to backend:', googleTokenId);
       
-      // ✅ FIXED: Use GET request with query parameter
+      // Decode and log Google JWT to see what data we have
+      const googleUserInfo = this.parseJwtPayload(googleTokenId);
+      console.log('Google JWT payload:', googleUserInfo);
+      
+      // Use GET request with query parameter
       const response = await apiClient.get(`${API_ENDPOINTS.auth.googleLogin}?tokenId=${googleTokenId}`);
       
       console.log('Backend response:', response.data);
       
-      // ✅ FIXED: Parse your exact backend response format
+      // Parse your exact backend response format
       const { responseCode, success, responseBody } = response.data;
       
       if (!success || responseCode !== "1") {
@@ -71,19 +75,23 @@ class AuthService {
         throw new Error('No token received from backend');
       }
 
-      // ✅ FIXED: Extract data according to your backend format
+      // Extract token from backend
       const token = responseBody.token;
       
-      // ✅ FIXED: Since you mentioned email, name, photoUrl are returned but not in current response
-      // We'll extract user data from the JWT token payload for now
-      const userFromToken = this.parseJwtPayload(token);
-      
+      // ✅ FIXED: Use Google JWT data directly (more reliable than backend JWT)
       const user = {
-        email: userFromToken.email || responseBody.email,
-        name: userFromToken.name || responseBody.name,
-        photoUrl: userFromToken.picture || responseBody.photoUrl,
-        id: userFromToken.sub || responseBody.id,
+        id: googleUserInfo.sub || responseBody.id,
+        email: googleUserInfo.email || responseBody.email,
+        name: googleUserInfo.name || responseBody.name,
+        photoUrl: googleUserInfo.picture || responseBody.photoUrl,
+        // Add required flags to prevent redirect loops
+        profileCompleted: true,
+        emailVerified: googleUserInfo.email_verified || true,
+        authProvider: 'google',
+        isGuest: false,
       };
+
+      console.log('Final user object:', user);
 
       return { token, user };
       

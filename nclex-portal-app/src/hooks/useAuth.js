@@ -14,6 +14,7 @@ import {
   getProfile,
   clearError,
   setUser,
+  clearAuth,
 } from '../store/slices/authSlice';
 import { showSuccessToast, showErrorToast } from '../store/slices/uiSlice';
 
@@ -95,22 +96,29 @@ export const useAuth = () => {
   }, [dispatch, navigate]);
 
   // Logout function
+// 4. FIX: Logout method to clear all data
   const logout = useCallback(async () => {
     try {
-      // Clear all auth data
-      localStorage.removeItem('guestMode');
-      localStorage.removeItem('guestUser');
+      // ✅ CLEAR ALL auth data
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
+      localStorage.removeItem('guestMode');
+      localStorage.removeItem('guestUser');
       
       // Only call API logout if not a guest
       if (!user?.isGuest) {
         await dispatch(logoutAction()).unwrap();
       }
       
+      // Clear Redux state
+      dispatch(clearAuth());
+      
       dispatch(showSuccessToast('Logged out successfully.'));
       navigate('/login');
     } catch (error) {
+      // Clear local data even if API call fails
+      localStorage.clear();
+      dispatch(clearAuth());
       navigate('/login');
     }
   }, [dispatch, navigate, user?.isGuest]);
@@ -191,14 +199,23 @@ export const useAuth = () => {
   const setAuthData = useCallback(({ token, user }) => {
     console.log('Setting auth data:', { token, user });
     
+    // ✅ CLEAR any existing guest data first
+    localStorage.removeItem('guestMode');
+    localStorage.removeItem('guestUser');
+    
+    // Store in localStorage
     localStorage.setItem('authToken', token);
     localStorage.setItem('user', JSON.stringify(user));
+    
+    // Update Redux state
     dispatch(setUser(user));
+    
+    // Show success message with actual user name
     dispatch(showSuccessToast(`Welcome back, ${user.name || 'User'}!`));
   }, [dispatch]);
-
-  // ✅ ADD: initializeAuth method
-  const initializeAuth = useCallback(() => {
+    // ✅ ADD: initializeAuth method
+    // 3. FIX: initializeAuth method to handle the data correctly
+    const initializeAuth = useCallback(() => {
     const token = localStorage.getItem('authToken');
     const userData = localStorage.getItem('user');
     
@@ -214,8 +231,10 @@ export const useAuth = () => {
         localStorage.removeItem('user');
       }
     }
-    return false;
-  }, [dispatch]);
+    
+    // ✅ If no auth token, check guest mode separately
+    return checkGuestMode();
+  }, [dispatch, checkGuestMode]);
 
   // Check if user is guest
   const isGuest = user?.isGuest || checkGuestMode();
