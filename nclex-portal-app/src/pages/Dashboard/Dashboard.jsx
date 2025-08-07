@@ -225,7 +225,61 @@ const ProgressCard = styled(Card)`
     opacity: 0.1;
   }
 `;
+// Add these styled components to your Dashboard.jsx:
+const UserProfileContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.background.paper};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  border: 1px solid ${({ theme }) => theme.colors.border.light};
+`;
 
+const UserAvatar = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: ${({ theme }) => theme.colors.primary[500]};
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
+const UserDetails = styled.div`
+  flex: 1;
+`;
+
+const UserName = styled.div`
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: ${({ theme }) => theme.fontSize.base};
+`;
+
+const UserEmail = styled.div`
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-top: 2px;
+`;
+
+const LogoutButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.gray[100]};
+    color: ${({ theme }) => theme.colors.error.main};
+  }
+`;
 // Dashboard component
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -270,17 +324,34 @@ const Dashboard = () => {
   const { user, logout } = useAuth();
   
   return (
-    <Layout>
+     <Layout>
       <DashboardContainer>
-        {/* Welcome section with user info */}
         <WelcomeSection>
           <WelcomeContent>
-            <WelcomeTitle>Welcome back, {user?.name || 'Student'}!</WelcomeTitle>
-            <WelcomeSubtitle>Ready to continue your NCLEX preparation?</WelcomeSubtitle>
+            <WelcomeTitle>
+              Welcome back, {user?.name || 'Student'}! 👋
+            </WelcomeTitle>
+            <WelcomeSubtitle>
+              Ready to continue your NCLEX preparation?
+            </WelcomeSubtitle>
           </WelcomeContent>
           
-          {user && (
-            <UserProfile user={user} onLogout={logout} />
+          {/* User Profile Display */}
+          {user && !user.isGuest && (
+            <UserProfileContainer>
+              {user.photoUrl && (
+                <UserAvatar>
+                  <img src={user.photoUrl} alt={user.name} />
+                </UserAvatar>
+              )}
+              <UserDetails>
+                <UserName>{user.name}</UserName>
+                <UserEmail>{user.email}</UserEmail>
+              </UserDetails>
+              <LogoutButton onClick={logout}>
+                <LogOut size={16} />
+              </LogoutButton>
+            </UserProfileContainer>
           )}
         </WelcomeSection>
         

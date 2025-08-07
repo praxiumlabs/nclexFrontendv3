@@ -389,12 +389,13 @@ const Login = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      const result = await signInWithGoogle();
-      console.log('Google login successful:', result);
-      // Navigation is handled in the hook
+      console.log('Starting Google login...');
+      await signInWithGoogle();
+      console.log('Google login completed successfully');
+      // Navigation is handled in useGoogleAuth hook
     } catch (error) {
       console.error('Google login failed:', error);
-      // Error is already handled by the hook
+      // Error is already handled by the hook and displayed via googleError
     }
   };
 

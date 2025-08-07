@@ -13,6 +13,8 @@ import { ErrorBoundary } from './components/common/ErrorBoundary/ErrorBoundary';
 import { PrivateRoute } from './routes/PrivateRoute';
 import { PublicRoute } from './routes/PublicRoute';
 import { Layout } from './components/layout/layout/layout';
+import { useAuth } from './hooks/useAuth';
+import { useEffect } from 'react';
 
 // Lazy load pages for better performance
 const Landing = lazy(() => import('./pages/Landing/Landing'));
@@ -101,6 +103,15 @@ function AppContent() {
 
 // Main App component
 function App() {
+    const { initializeAuth } = useAuth();
+  
+  useEffect(() => {
+    // Initialize auth from localStorage when app starts
+    const initialized = initializeAuth();
+    if (initialized) {
+      console.log('User session restored from localStorage');
+    }
+  }, [initializeAuth]);
   return (
     <Provider store={store}>
       <AppContent />

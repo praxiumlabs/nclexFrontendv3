@@ -2,34 +2,23 @@
 import { apiClient, API_ENDPOINTS } from './api';
 
 class AuthService {
-  // Login user
+  // Regular login method (keep unchanged)
   async login(credentials) {
-
     try {
-
-      const response = await apiClient.get(API_ENDPOINTS.auth.googleLogin, {
-        tokenId: credentials.token
-      });
-
-      const accessToken = response.data.responseBody.token;
-      const refreshToken = null; 
-      const user = {};
+      const response = await apiClient.post(API_ENDPOINTS.auth.login, credentials);
+      const { accessToken, refreshToken, user } = response.data;
       
-      
-      // Store tokens
       this.setTokens({ accessToken, refreshToken });
       
       return {
-        accessToken,
-        refreshToken,
-        user,
-      };
-    } catch (error) {
-      console.error("Login failed:", error);
-      throw this.handleError(error);
-
+          accessToken,
+          refreshToken,
+          user,
+        };
+      } catch (error) {
+        throw this.handleError(error);
+      }
     }
-  }
   
   // Register new user
   async register(userData) {
@@ -64,18 +53,28 @@ class AuthService {
   }
   async googleLogin(googleTokenId) {
     try {
-      const response = await apiClient.post(API_ENDPOINTS.auth.googleLogin, {
-        tokenId: googleTokenId // Send Google token ID to backend
-      });
+      console.log('Sending Google token to backend:', googleTokenId);
       
-      // Backend should return: { token: "our-app-token", user: { email, name, photoUrl, ... } }
-      const { token, user } = response.data;
+      // ✅ FIXED: Use GET request with query parameter to match your backend
+      const response = await apiClient.get(`${API_ENDPOINTS.auth.googleLogin}?tokenId=${googleTokenId}`);
       
-      if (!token || !user) {
-        throw new Error('Invalid response from server');
+      console.log('Backend response:', response.data);
+      
+      // ✅ Parse your backend response format
+      const token = response.data.responseBody?.token;
+      const user = {
+        email: response.data.responseBody?.email,
+        name: response.data.responseBody?.name,
+        photoUrl: response.data.responseBody?.photoUrl,
+        id: response.data.responseBody?.id,
+      };
+      
+      if (!token) {
+        throw new Error('No token received from backend');
       }
-      
+
       return { token, user };
+      
     } catch (error) {
       console.error('Google login API error:', error);
       throw this.handleError(error);
@@ -169,9 +168,11 @@ class AuthService {
   }
   
   // Token management methods
+  // Updated token management to use 'authToken' key
   setTokens({ accessToken, refreshToken }) {
     if (accessToken) {
-      localStorage.setItem('accessToken', accessToken);
+      // Use 'authToken' as the key for consistency
+      localStorage.setItem('authToken', accessToken);
     }
     if (refreshToken) {
       localStorage.setItem('refreshToken', refreshToken);
@@ -180,13 +181,13 @@ class AuthService {
   
   getTokens() {
     return {
-      accessToken: localStorage.getItem('accessToken'),
+      accessToken: localStorage.getItem('authToken'), // Changed key
       refreshToken: localStorage.getItem('refreshToken'),
     };
   }
   
   clearTokens() {
-    localStorage.removeItem('accessToken');
+    localStorage.removeItem('authToken');
     localStorage.removeItem('refreshToken');
   }
   

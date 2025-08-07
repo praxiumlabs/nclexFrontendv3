@@ -155,14 +155,18 @@ export const useAuth = () => {
     }
   }, [dispatch, user?.isGuest]);
 
-    const setAuthData = useCallback(({ token, user }) => {
+  const setAuthData = useCallback(({ token, user }) => {
+    console.log('Setting auth data:', { token, user });
+    
     // Store in localStorage
     localStorage.setItem('authToken', token);
     localStorage.setItem('user', JSON.stringify(user));
     
     // Update Redux state
     dispatch(setUser(user));
-    dispatch(setAuthenticated(true));
+    
+    // Show success message
+    dispatch(showSuccessToast(`Welcome back, ${user.name || 'User'}!`));
   }, [dispatch]);
 
   // Clear authentication error
@@ -213,14 +217,14 @@ export const useAuth = () => {
 
 
   const initializeAuth = useCallback(() => {
-  const token = localStorage.getItem('authToken');
-  const userData = localStorage.getItem('user');
-  
-  if (token && userData) {
-    try {
+    const token = localStorage.getItem('authToken');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      try {
         const user = JSON.parse(userData);
         dispatch(setUser(user));
-        dispatch(setAuthenticated(true));
+        console.log('Auth initialized from localStorage:', user);
         return true;
       } catch (error) {
         console.error('Error parsing user data:', error);
