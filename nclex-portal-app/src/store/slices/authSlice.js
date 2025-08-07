@@ -155,6 +155,16 @@ const authSlice = createSlice({
       state.refreshToken = action.payload.refreshToken;
       state.isAuthenticated = true;
     },
+    setAuthenticated: (state, action) => {
+      state.isAuthenticated = action.payload;
+  },
+  clearAuth: (state) => {
+    state.user = null;
+    state.isAuthenticated = false;
+    state.error = null;
+    state.accessToken = null;
+    state.refreshToken = null;
+  },
   },
   extraReducers: (builder) => {
     // Login
@@ -313,8 +323,14 @@ const authSlice = createSlice({
 });
 
 // Actions
-export const { clearError, clearProfileError, setUser, setTokens } = authSlice.actions;
-
+export const { 
+  clearError, 
+  clearProfileError, 
+  setUser, 
+  setTokens, 
+  setAuthenticated,
+  clearAuth 
+} = authSlice.actions;
 // Selectors
 export const selectAuth = (state) => state.auth;
 export const selectUser = (state) => state.auth.user;
