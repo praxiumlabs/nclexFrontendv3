@@ -1,9 +1,7 @@
-// Create this file: src/services/googleAuth.service.js
-
+// 2. Update GoogleAuthService - src/services/googleAuth.service.js
 class GoogleAuthService {
   constructor() {
     this.isInitialized = false;
-    this.googleAuth = null;
   }
 
   async initialize() {
@@ -46,23 +44,16 @@ class GoogleAuthService {
     const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
     
     if (!clientId) {
-      throw new Error('Google Client ID is not configured');
+      throw new Error('Google Client ID is not configured. Please add REACT_APP_GOOGLE_CLIENT_ID to your .env file');
     }
 
     window.google.accounts.id.initialize({
       client_id: clientId,
-      callback: this.handleCredentialResponse.bind(this),
       auto_select: false,
       cancel_on_tap_outside: true,
     });
     
     this.isInitialized = true;
-  }
-
-  handleCredentialResponse(response) {
-    // This will be called when user completes Google sign-in
-    // The response.credential contains the JWT token from Google
-    console.log('Google credential response:', response);
   }
 
   async signInWithPopup() {
@@ -71,32 +62,32 @@ class GoogleAuthService {
     }
 
     return new Promise((resolve, reject) => {
-      const callback = (response) => {
-        if (response.credential) {
-          resolve(response.credential);
-        } else {
-          reject(new Error('No credential received from Google'));
-        }
-      };
-
-      // Update the callback for this specific sign-in attempt
+      // Set up callback for this specific sign-in attempt
       window.google.accounts.id.initialize({
         client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-        callback: callback,
+        callback: (response) => {
+          if (response.credential) {
+            resolve(response.credential); // This is the Google token ID
+          } else {
+            reject(new Error('No credential received from Google'));
+          }
+        },
         auto_select: false,
         cancel_on_tap_outside: true,
       });
 
-      // Show the Google Sign-In popup
+      // Trigger the Google Sign-In prompt
       window.google.accounts.id.prompt((notification) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          reject(new Error('Google Sign-In was cancelled or not displayed'));
+          // Fallback to One Tap if prompt is not shown
+          reject(new Error('Google Sign-In was cancelled or not available'));
         }
       });
     });
   }
 
-  parseJwtPayload(token) {
+  // Helper method to decode Google JWT (for debugging)
+  parseGoogleToken(token) {
     try {
       const payload = token.split('.')[1];
       const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
@@ -104,29 +95,6 @@ class GoogleAuthService {
     } catch (error) {
       throw new Error('Invalid JWT token');
     }
-  }
-
-  // Method to render Google Sign-In button (optional)
-  renderButton(elementId, options = {}) {
-    if (!this.isInitialized) {
-      console.warn('Google Auth not initialized');
-      return;
-    }
-
-    const defaultOptions = {
-      type: 'standard',
-      shape: 'rectangular',
-      theme: 'outline',
-      text: 'signin_with',
-      size: 'large',
-      logo_alignment: 'left',
-      ...options
-    };
-
-    window.google.accounts.id.renderButton(
-      document.getElementById(elementId),
-      defaultOptions
-    );
   }
 }
 

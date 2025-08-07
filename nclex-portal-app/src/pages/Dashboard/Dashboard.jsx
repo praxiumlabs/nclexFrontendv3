@@ -12,6 +12,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Card } from '../../components/common/Card/Card';
 import { Button } from '../../components/common/Button/Button';
 import { Loader } from '../../components/common/Loader/Loader';
+import { UserProfile } from '../../components/common/UserProfile/UserProfile';
+import { useAuth } from '../../hooks/useAuth';
 import { 
   selectOverview, 
   selectSubjectProgress,
@@ -263,6 +265,30 @@ const Dashboard = () => {
     if (hour < 18) return 'Good afternoon';
     return 'Good evening';
   };
+
+  const Dashboard = () => {
+  const { user, logout } = useAuth();
+  
+  return (
+    <Layout>
+      <DashboardContainer>
+        {/* Welcome section with user info */}
+        <WelcomeSection>
+          <WelcomeContent>
+            <WelcomeTitle>Welcome back, {user?.name || 'Student'}!</WelcomeTitle>
+            <WelcomeSubtitle>Ready to continue your NCLEX preparation?</WelcomeSubtitle>
+          </WelcomeContent>
+          
+          {user && (
+            <UserProfile user={user} onLogout={logout} />
+          )}
+        </WelcomeSection>
+        
+        {/* Rest of your dashboard content */}
+      </DashboardContainer>
+    </Layout>
+  );
+};
 
   const quickActions = [
     {

@@ -463,8 +463,9 @@ const Register = () => {
 
   const handleGoogleSignup = async () => {
     try {
-      await signInWithGoogle();
-      navigate('/app/dashboard');
+      const result = await signInWithGoogle();
+      console.log('Google signup successful:', result);
+      // Navigation is handled in the hook
     } catch (error) {
       console.error('Google signup failed:', error);
       // Error is already handled by the hook

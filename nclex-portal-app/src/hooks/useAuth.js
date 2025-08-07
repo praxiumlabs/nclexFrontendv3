@@ -155,6 +155,16 @@ export const useAuth = () => {
     }
   }, [dispatch, user?.isGuest]);
 
+    const setAuthData = useCallback(({ token, user }) => {
+    // Store in localStorage
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    
+    // Update Redux state
+    dispatch(setUser(user));
+    dispatch(setAuthenticated(true));
+  }, [dispatch]);
+
   // Clear authentication error
   const clearAuthError = useCallback(() => {
     dispatch(clearError());
@@ -201,6 +211,25 @@ export const useAuth = () => {
   // Override isAuthenticated to include guest mode
   const isAuthenticatedOrGuest = isAuthenticated || checkGuestMode();
 
+
+  const initializeAuth = useCallback(() => {
+  const token = localStorage.getItem('authToken');
+  const userData = localStorage.getItem('user');
+  
+  if (token && userData) {
+    try {
+        const user = JSON.parse(userData);
+        dispatch(setUser(user));
+        dispatch(setAuthenticated(true));
+        return true;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+      }
+    }
+    return false;
+  }, [dispatch]);
   return {
     // State
     user,
@@ -210,6 +239,7 @@ export const useAuth = () => {
     error: auth.error,
     profileLoading: auth.profileLoading,
     profileError: auth.profileError,
+
     
     // Actions
     login,
@@ -219,6 +249,8 @@ export const useAuth = () => {
     updateProfile,
     changePassword,
     clearAuthError,
+    setAuthData,
+    initializeAuth,
     
     // Utilities
     hasRole,

@@ -62,23 +62,22 @@ class AuthService {
       this.clearTokens();
     }
   }
-  async googleLogin(googleToken) {
+  async googleLogin(googleTokenId) {
     try {
       const response = await apiClient.post(API_ENDPOINTS.auth.googleLogin, {
-        token: googleToken
+        tokenId: googleTokenId // Send Google token ID to backend
       });
       
-      const { accessToken, refreshToken, user } = response.data;
+      // Backend should return: { token: "our-app-token", user: { email, name, photoUrl, ... } }
+      const { token, user } = response.data;
       
-      // Store tokens
-      this.setTokens({ accessToken, refreshToken });
+      if (!token || !user) {
+        throw new Error('Invalid response from server');
+      }
       
-      return {
-        accessToken,
-        refreshToken,
-        user,
-      };
+      return { token, user };
     } catch (error) {
+      console.error('Google login API error:', error);
       throw this.handleError(error);
     }
   }

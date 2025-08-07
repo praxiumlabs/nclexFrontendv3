@@ -1,5 +1,6 @@
-// src/hooks/useGoogleAuth.js
+// 1. Update useGoogleAuth hook - src/hooks/useGoogleAuth.js
 import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import GoogleAuthService from '../services/googleAuth.service';
 import AuthService from '../services/auth.service';
 import { useAuth } from './useAuth';
@@ -7,57 +8,50 @@ import { useAuth } from './useAuth';
 export const useGoogleAuth = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { login } = useAuth();
+  const navigate = useNavigate();
+  const { setAuthData } = useAuth(); // We'll need to add this method to useAuth
 
   const signInWithGoogle = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      // Initialize Google Auth if not already done
+      // Step 1: Initialize Google Auth
       await GoogleAuthService.initialize();
       
-      // Trigger Google Sign-In popup
-      return new Promise((resolve, reject) => {
-        window.google.accounts.id.initialize({
-          client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-          callback: async (response) => {
-            try {
-            console.log("Google Response:", response); 
-              // Send Google token to your backend for verification
-            const authResult = await AuthService.login({ token: response.credential });
-              
-              // Update auth state
-              await login(authResult);
-              
-              resolve(authResult);
-            } catch (error) {
-              setError(error.message || 'Google authentication failed');
-              reject(error);
-            } finally {
-              setLoading(false);
-            }
-          },
-          auto_select: false,
-          cancel_on_tap_outside: true,
-        });
+      // Step 2: Get Google Token from user authentication
+      const googleToken = await GoogleAuthService.signInWithPopup();
+      
+      if (!googleToken) {
+        throw new Error('Failed to get Google token');
+      }
 
-        // Show the Google Sign-In popup
-        window.google.accounts.id.prompt((notification) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            setError('Google Sign-In was cancelled or not displayed');
-            reject(new Error('Google Sign-In cancelled'));
-            setLoading(false);
-          }
-        });
-      });
+      // Step 3: Send Google token to backend for verification and get our app token
+      const response = await AuthService.googleLogin(googleToken);
+      
+      // Step 4: Store the token from our backend in localStorage
+      const { token, user } = response;
+      
+      // Store our app's token
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      // Step 5: Update auth state
+      setAuthData({ token, user });
+      
+      // Step 6: Navigate to dashboard
+      navigate('/app/dashboard');
+      
+      return { token, user };
       
     } catch (error) {
-      setError(error.message || 'Failed to initialize Google authentication');
-      setLoading(false);
+      console.error('Google authentication failed:', error);
+      setError(error.message || 'Google authentication failed');
       throw error;
+    } finally {
+      setLoading(false);
     }
-  }, [login]);
+  }, [navigate, setAuthData]);
 
   const clearError = useCallback(() => {
     setError(null);
