@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Layout } from '../../components/layout/layout/layout';
+// Remove the Layout import - it's not needed here
 import { Card } from '../../components/common/Card/Card';
 import { Button } from '../../components/common/Button/Button';
 import { Loader } from '../../components/common/Loader/Loader';
@@ -56,12 +56,7 @@ const WelcomeTitle = styled.h1`
   margin: 0 0 ${({ theme }) => theme.spacing.xs};
   
   span {
-    background: linear-gradient(135deg, 
-      ${({ theme }) => theme.colors.primary[500]} 0%, 
-      ${({ theme }) => theme.colors.primary[600]} 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: ${({ theme }) => theme.colors.primary[600]};
   }
 `;
 
@@ -71,42 +66,55 @@ const WelcomeSubtitle = styled.p`
   margin: 0;
 `;
 
-const QuickStats = styled.div`
-  display: flex;
+const QuickActionsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+`;
+
+const QuickActionCard = styled(Card)`
+  cursor: pointer;
+  transition: all ${({ theme }) => theme.transitions.base};
+  position: relative;
+  overflow: hidden;
   
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    gap: ${({ theme }) => theme.spacing.md};
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: ${({ theme }) => theme.shadows.lg};
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: ${({ $color }) => $color};
   }
 `;
 
-const QuickStat = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const StatIcon = styled.div`
+const QuickActionIcon = styled.div`
   width: 48px;
   height: 48px;
   border-radius: ${({ theme }) => theme.borderRadius.lg};
+  background: ${({ $color }) => `${$color}20`};
+  color: ${({ $color }) => $color};
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${({ $color }) => `${$color}20`};
-  color: ${({ $color }) => $color};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
 `;
 
-const StatContent = styled.div``;
-
-const StatValue = styled.div`
-  font-size: ${({ theme }) => theme.fontSize['2xl']};
-  font-weight: ${({ theme }) => theme.fontWeight.bold};
+const QuickActionTitle = styled.h3`
+  font-size: ${({ theme }) => theme.fontSize.lg};
+  font-weight: ${({ theme }) => theme.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
-  line-height: 1;
+  margin: 0 0 ${({ theme }) => theme.spacing.xs};
 `;
 
-const StatLabel = styled.div`
+const QuickActionDescription = styled.p`
   font-size: ${({ theme }) => theme.fontSize.sm};
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
@@ -115,31 +123,6 @@ const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: ${({ theme }) => theme.spacing.lg};
-`;
-
-const ProgressCard = styled(Card)`
-  position: relative;
-  overflow: visible;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(135deg, 
-      ${({ theme }) => theme.colors.primary[500]} 0%, 
-      ${({ theme }) => theme.colors.primary[600]} 100%);
-    border-radius: ${({ theme }) => theme.borderRadius.lg};
-    z-index: -1;
-    opacity: 0;
-    transition: opacity ${({ theme }) => theme.transitions.base};
-  }
-  
-  &:hover::before {
-    opacity: 0.1;
-  }
 `;
 
 const StatCard = styled(Card)`
@@ -216,6 +199,31 @@ const ChartContainer = styled.div`
   padding: ${({ theme }) => theme.spacing.md};
 `;
 
+const ProgressCard = styled(Card)`
+  position: relative;
+  overflow: visible;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, 
+      ${({ theme }) => theme.colors.primary[500]} 0%, 
+      ${({ theme }) => theme.colors.primary[600]} 100%);
+    border-radius: ${({ theme }) => theme.borderRadius.lg};
+    z-index: -1;
+    opacity: 0;
+    transition: opacity ${({ theme }) => theme.transitions.base};
+  }
+  
+  &:hover::before {
+    opacity: 0.1;
+  }
+`;
+
 // Dashboard component
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -283,96 +291,73 @@ const Dashboard = () => {
     }
   ];
 
+  // If loading, return just the loader (no Layout wrapper)
   if (loading) {
-    return (
-      <Layout>
-        <Loader fullScreen text="Loading your dashboard..." />
-      </Layout>
-    );
+    return <Loader fullScreen text="Loading your dashboard..." />;
   }
 
+  // Return the dashboard content WITHOUT wrapping it in Layout
   return (
-    <Layout>
-      <DashboardContainer>
-        {/* Welcome Section */}
-        <WelcomeSection>
-          <WelcomeContent>
-            <WelcomeTitle>
-              {getGreeting()}, <span>Sarah</span>! 👋
-            </WelcomeTitle>
-            <WelcomeSubtitle>
-              {overview.currentStreak > 0 
-                ? `You're on a ${overview.currentStreak} day streak! Keep it up!`
-                : 'Ready to start your study session?'}
-            </WelcomeSubtitle>
-          </WelcomeContent>
-          
-          <QuickStats>
-            <QuickStat>
-              <StatIcon $color="#10b981">
-                <Activity size={24} />
-              </StatIcon>
-              <StatContent>
-                <StatValue>{Math.floor(animatedAccuracy)}%</StatValue>
-                <StatLabel>Accuracy</StatLabel>
-              </StatContent>
-            </QuickStat>
-            
-            <QuickStat>
-              <StatIcon $color="#f59e0b">
-                <Star size={24} />
-              </StatIcon>
-              <StatContent>
-                <StatValue>{Math.floor(animatedStreak)}</StatValue>
-                <StatLabel>Day Streak</StatLabel>
-              </StatContent>
-            </QuickStat>
-          </QuickStats>
-        </WelcomeSection>
+    <DashboardContainer>
+      {/* Welcome Section */}
+      <WelcomeSection>
+        <WelcomeContent>
+          <WelcomeTitle>
+            {getGreeting()}, <span>Sarah</span>! 👋
+          </WelcomeTitle>
+          <WelcomeSubtitle>
+            {overview.currentStreak > 0 
+              ? `You're on a ${overview.currentStreak} day streak! Keep it up!`
+              : 'Ready to start your study session?'}
+          </WelcomeSubtitle>
+        </WelcomeContent>
+      </WelcomeSection>
 
-        {/* Quick Actions */}
-        <div>
-          <SectionHeader>
-            <SectionTitle>Quick Actions</SectionTitle>
-          </SectionHeader>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
-            {quickActions.map((action) => {
-              const Icon = action.icon;
-              return (
-                <StatCard
-                  key={action.id}
-                  variant="elevated"
-                  hoverable
-                  onClick={action.action}
-                >
-                  <Card.Content>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <StatIcon $color={action.color}>
-                          <Icon size={24} />
-                        </StatIcon>
-                        <div>
-                          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>
-                            {action.title}
-                          </h3>
-                          <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--text-secondary)' }}>
-                            {action.description}
-                          </p>
-                        </div>
-                      </div>
-                      <ChevronRight size={20} style={{ color: 'var(--text-secondary)' }} />
-                    </div>
-                  </Card.Content>
-                </StatCard>
-              );
-            })}
-          </div>
-        </div>
+      {/* Quick Actions */}
+      <div>
+        <SectionHeader>
+          <SectionTitle>Quick Actions</SectionTitle>
+        </SectionHeader>
+        
+        <QuickActionsGrid>
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <QuickActionCard 
+                key={action.id}
+                $color={action.color}
+                onClick={action.action}
+                hoverable
+              >
+                <Card.Content>
+                  <QuickActionIcon $color={action.color}>
+                    <Icon size={24} />
+                  </QuickActionIcon>
+                  <QuickActionTitle>{action.title}</QuickActionTitle>
+                  <QuickActionDescription>{action.description}</QuickActionDescription>
+                </Card.Content>
+              </QuickActionCard>
+            );
+          })}
+        </QuickActionsGrid>
+      </div>
 
-        {/* Performance Stats */}
+      {/* Statistics */}
+      <div>
+        <SectionHeader>
+          <SectionTitle>Your Progress</SectionTitle>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            rightIcon={<ChevronRight size={16} />}
+            onClick={() => navigate('/app/progress')}
+          >
+            View Details
+          </Button>
+        </SectionHeader>
+        
         <StatsGrid>
-          <ProgressCard variant="elevated">
+          <StatCard variant="elevated" onClick={() => navigate('/app/progress')}>
             <Card.Content>
               <StatHeader>
                 <StatTitle>Overall Accuracy</StatTitle>
@@ -385,13 +370,10 @@ const Dashboard = () => {
               <StatDescription>
                 Keep it above 75% to maintain your current level
               </StatDescription>
-              <ChartContainer>
-                <PerformanceChart data={activityHistory} />
-              </ChartContainer>
             </Card.Content>
-          </ProgressCard>
+          </StatCard>
 
-          <ProgressCard variant="elevated">
+          <StatCard variant="elevated" onClick={() => navigate('/app/progress')}>
             <Card.Content>
               <StatHeader>
                 <StatTitle>Questions Answered</StatTitle>
@@ -404,45 +386,82 @@ const Dashboard = () => {
               <StatDescription>
                 {weeklyGoals.questionsTarget - weeklyGoals.questionsCompleted} more to reach weekly goal
               </StatDescription>
-              <ChartContainer>
-                <WeeklyActivityChart data={weeklyGoals} />
-              </ChartContainer>
             </Card.Content>
-          </ProgressCard>
+          </StatCard>
 
-          <ProgressCard variant="elevated">
+          <StatCard variant="elevated" onClick={() => navigate('/app/progress')}>
             <Card.Content>
               <StatHeader>
-                <StatTitle>Subject Performance</StatTitle>
-                <Button variant="ghost" size="xs" onClick={() => navigate('/app/subjects')}>
-                  View All
-                </Button>
+                <StatTitle>Study Streak</StatTitle>
+                <StatBadge $trend={animatedStreak > 0 ? 'up' : 'neutral'}>
+                  {animatedStreak > 0 ? <ArrowUpRight size={14} /> : <Activity size={14} />}
+                  {animatedStreak > 0 ? `${animatedStreak} days` : 'Start today'}
+                </StatBadge>
               </StatHeader>
-              <ChartContainer>
-                <SubjectRadarChart data={subjectProgress} />
-              </ChartContainer>
+              <StatMainValue>{Math.floor(animatedStreak)} days</StatMainValue>
+              <StatDescription>
+                {animatedStreak > 0 
+                  ? 'Keep studying daily to maintain your streak!'
+                  : 'Complete a session to start your streak'}
+              </StatDescription>
             </Card.Content>
-          </ProgressCard>
+          </StatCard>
         </StatsGrid>
+      </div>
 
-        {/* Recent Activity */}
-        <div>
-          <SectionHeader>
-            <SectionTitle>Recent Activity</SectionTitle>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              rightIcon={<ChevronRight size={16} />}
-              onClick={() => navigate('/app/activity')}
-            >
-              View All
-            </Button>
-          </SectionHeader>
-          
-          {/* Activity items would go here */}
-        </div>
-      </DashboardContainer>
-    </Layout>
+      {/* Performance Charts */}
+      <StatsGrid>
+        <ProgressCard variant="elevated">
+          <Card.Content>
+            <StatHeader>
+              <StatTitle>Weekly Activity</StatTitle>
+              <StatBadge $trend="up">
+                <ArrowUpRight size={14} />
+                +12%
+              </StatBadge>
+            </StatHeader>
+            <StatMainValue>{Math.floor(animatedQuestions)}</StatMainValue>
+            <StatDescription>
+              {weeklyGoals.questionsTarget - weeklyGoals.questionsCompleted} more to reach weekly goal
+            </StatDescription>
+            <ChartContainer>
+              <WeeklyActivityChart data={weeklyGoals} />
+            </ChartContainer>
+          </Card.Content>
+        </ProgressCard>
+
+        <ProgressCard variant="elevated">
+          <Card.Content>
+            <StatHeader>
+              <StatTitle>Subject Performance</StatTitle>
+              <Button variant="ghost" size="xs" onClick={() => navigate('/app/subjects')}>
+                View All
+              </Button>
+            </StatHeader>
+            <ChartContainer>
+              <SubjectRadarChart data={subjectProgress} />
+            </ChartContainer>
+          </Card.Content>
+        </ProgressCard>
+      </StatsGrid>
+
+      {/* Recent Activity */}
+      <div>
+        <SectionHeader>
+          <SectionTitle>Recent Activity</SectionTitle>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            rightIcon={<ChevronRight size={16} />}
+            onClick={() => navigate('/app/activity')}
+          >
+            View All
+          </Button>
+        </SectionHeader>
+        
+        {/* Activity items would go here */}
+      </div>
+    </DashboardContainer>
   );
 };
 

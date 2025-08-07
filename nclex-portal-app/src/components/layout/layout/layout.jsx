@@ -1,5 +1,5 @@
 // src/components/layout/layout/layout.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 import { Navigation } from '../Navigation/Navigation';
@@ -117,6 +117,7 @@ const MainWrapper = styled.div`
   flex: 1;
   display: flex;
   position: relative;
+  padding-top: 64px; /* Add padding for fixed navigation */
 `;
 
 const MainContent = styled.main`
@@ -126,12 +127,16 @@ const MainContent = styled.main`
   min-height: 100%;
   transition: margin-left ${({ theme }) => theme.transitions.base};
   
-  ${({ $sidebarOpen, $sidebarCollapsed }) => 
-    $sidebarOpen && css`
-      @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-        margin-left: ${$sidebarCollapsed ? '80px' : '280px'};
-      }
-    `
+  /* Always apply margin-left for sidebar on desktop when showSidebar is true */
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    margin-left: ${({ $showSidebar, $sidebarCollapsed }) => 
+      $showSidebar ? ($sidebarCollapsed ? '80px' : '280px') : '0'
+    };
+  }
+  
+  /* On mobile, no margin needed as sidebar overlays */
+  @media (max-width: ${({ theme }) => theme.breakpoints.lg}) {
+    margin-left: 0;
   }
 `;
 
@@ -239,10 +244,19 @@ export const Layout = ({
   breadcrumbs,
   loading = false,
 }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Start closed on mobile
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useMediaQuery('(max-width: 1024px)');
   const { isGuest } = useAuth();
+
+  // Set sidebar open state based on screen size
+  useEffect(() => {
+    if (!isMobile) {
+      setSidebarOpen(true); // Always open on desktop
+    } else {
+      setSidebarOpen(false); // Closed by default on mobile
+    }
+  }, [isMobile]);
 
   const handleSidebarToggle = () => {
     if (isMobile) {
@@ -272,7 +286,7 @@ export const Layout = ({
         )}
         
         <MainContent 
-          $sidebarOpen={showSidebar && sidebarOpen} 
+          $showSidebar={showSidebar}
           $sidebarCollapsed={sidebarCollapsed}
         >
           {(pageTitle || breadcrumbs) && (

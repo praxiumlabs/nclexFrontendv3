@@ -14,9 +14,11 @@ import { Badge } from '../../common/Badge/Badge';
 
 // Styled components
 const Nav = styled.nav`
-  position: sticky;
+  position: fixed; /* Changed from sticky to fixed */
   top: 0;
-  z-index: ${({ theme }) => theme.zIndex.sticky};
+  left: 0;
+  right: 0;
+  z-index: ${({ theme }) => theme.zIndex.modal}; /* Increased z-index to be above sidebar */
   background: ${({ theme }) => theme.colors.background.paper};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
   backdrop-filter: blur(10px);
@@ -28,8 +30,7 @@ const Nav = styled.nav`
 `;
 
 const NavContainer = styled.div`
-  max-width: 1280px;
-  margin: 0 auto;
+  max-width: 100%;
   padding: 0 ${({ theme }) => theme.spacing.md};
   height: 64px;
   display: flex;
@@ -156,13 +157,14 @@ const UserMenu = styled.div`
   position: relative;
 `;
 
-const UserButton = styled.button`
+const UserMenuButton = styled.button`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+  padding: ${({ theme }) => theme.spacing.xs};
   border: none;
   background: transparent;
+  color: ${({ theme }) => theme.colors.text.primary};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   cursor: pointer;
   transition: all ${({ theme }) => theme.transitions.fast};
@@ -172,24 +174,22 @@ const UserButton = styled.button`
   }
 `;
 
-const UserAvatar = styled.img`
-  width: 32px;
-  height: 32px;
+const UserAvatar = styled.div`
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  object-fit: cover;
+  background: linear-gradient(135deg, 
+    ${({ theme }) => theme.colors.primary[400]} 0%, 
+    ${({ theme }) => theme.colors.primary[600]} 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: ${({ theme }) => theme.fontWeight.semibold};
+  color: white;
+  font-size: ${({ theme }) => theme.fontSize.sm};
 `;
 
-const UserName = styled.span`
-  display: none;
-  font-weight: ${({ theme }) => theme.fontWeight.medium};
-  color: ${({ theme }) => theme.colors.text.primary};
-  
-  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
-    display: block;
-  }
-`;
-
-const Dropdown = styled.div`
+const UserMenuDropdown = styled.div`
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
@@ -197,25 +197,24 @@ const Dropdown = styled.div`
   background: ${({ theme }) => theme.colors.background.paper};
   border: 1px solid ${({ theme }) => theme.colors.border.light};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
-  box-shadow: ${({ theme }) => theme.shadows.xl};
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-10px);
+  box-shadow: ${({ theme }) => theme.shadows.lg};
+  padding: ${({ theme }) => theme.spacing.sm};
+  z-index: ${({ theme }) => theme.zIndex.dropdown};
+  opacity: ${({ $open }) => $open ? '1' : '0'};
+  visibility: ${({ $open }) => $open ? 'visible' : 'hidden'};
+  transform: translateY(${({ $open }) => $open ? '0' : '-10px'});
   transition: all ${({ theme }) => theme.transitions.fast};
+`;
+
+const MenuSection = styled.div`
+  padding: ${({ theme }) => theme.spacing.xs};
   
-  ${({ $open }) => $open && css`
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-  `}
+  &:not(:last-child) {
+    border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
+  }
 `;
 
-const DropdownHeader = styled.div`
-  padding: ${({ theme }) => theme.spacing.md};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.light};
-`;
-
-const DropdownItem = styled.button`
+const MenuItem = styled.button`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
@@ -227,17 +226,10 @@ const DropdownItem = styled.button`
   text-align: left;
   cursor: pointer;
   transition: all ${({ theme }) => theme.transitions.fast};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
   
   &:hover {
     background: ${({ theme }) => theme.colors.action.hover};
-  }
-  
-  &:first-child {
-    border-radius: ${({ theme }) => `${theme.borderRadius.lg} ${theme.borderRadius.lg} 0 0`};
-  }
-  
-  &:last-child {
-    border-radius: ${({ theme }) => `0 0 ${theme.borderRadius.lg} ${theme.borderRadius.lg}`};
   }
 `;
 
@@ -360,14 +352,14 @@ export const Navigation = () => {
         <NavContainer>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <MobileMenuButton onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </MobileMenuButton>
             
             <NavBrand to="/app/dashboard">
               <BrandIcon>
                 <Shield size={24} color="white" />
               </BrandIcon>
-              <span>NCLEX Portal</span>
+              NCLEX Portal
             </NavBrand>
           </div>
 
@@ -380,7 +372,7 @@ export const Navigation = () => {
                   to={item.path}
                   $active={location.pathname === item.path}
                 >
-                  <Icon size={18} />
+                  <Icon size={16} />
                   {item.label}
                 </NavLink>
               );
@@ -391,66 +383,64 @@ export const Navigation = () => {
             <SearchButton>
               <Search size={20} />
             </SearchButton>
-
+            
             <NotificationButton>
               <Bell size={20} />
               {hasNotifications && <NotificationDot />}
             </NotificationButton>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              iconOnly
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </Button>
-
-            {user && (
-              <UserMenu ref={dropdownRef}>
-                <UserButton onClick={() => setUserMenuOpen(!userMenuOpen)}>
-                  <UserAvatar 
-                    src={user.photoUrl || `https://ui-avatars.com/api/?name=${user.name}&background=10b981&color=fff`} 
-                    alt={user.name} 
-                  />
-                  <UserName>{getDisplayName()}</UserName>
-                  <ChevronDown size={16} />
-                </UserButton>
-
-                <Dropdown $open={userMenuOpen}>
-                  <DropdownHeader>
-                    <div style={{ fontWeight: 600 }}>{user.name}</div>
-                    <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                      {user.email}
+            
+            <UserMenu ref={dropdownRef}>
+              <UserMenuButton onClick={() => setUserMenuOpen(!userMenuOpen)}>
+                <UserAvatar>
+                  {getUserInitials?.() || 'GU'}
+                </UserAvatar>
+                <ChevronDown size={16} />
+              </UserMenuButton>
+              
+              <UserMenuDropdown $open={userMenuOpen}>
+                <MenuSection>
+                  <div style={{ padding: '8px 12px' }}>
+                    <div style={{ fontWeight: 600 }}>
+                      {getDisplayName?.() || 'Guest User'}
                     </div>
-                  </DropdownHeader>
-                  
-                  <div style={{ padding: '8px' }}>
-                    <DropdownItem onClick={() => navigate('/app/profile')}>
-                      <User size={18} />
-                      Profile
-                    </DropdownItem>
-                    <DropdownItem onClick={() => navigate('/app/settings')}>
-                      <Settings size={18} />
-                      Settings
-                    </DropdownItem>
-                    <DropdownItem onClick={() => navigate('/app/help')}>
-                      <HelpCircle size={18} />
-                      Help & Support
-                    </DropdownItem>
-                    <DropdownItem onClick={handleLogout}>
-                      <LogOut size={18} />
-                      Logout
-                    </DropdownItem>
+                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
+                      {user?.email || 'guest@example.com'}
+                    </div>
                   </div>
-                </Dropdown>
-              </UserMenu>
-            )}
+                </MenuSection>
+                
+                <MenuSection>
+                  <MenuItem onClick={() => navigate('/app/profile')}>
+                    <User size={16} />
+                    Profile
+                  </MenuItem>
+                  <MenuItem onClick={() => navigate('/app/settings')}>
+                    <Settings size={16} />
+                    Settings
+                  </MenuItem>
+                  <MenuItem onClick={toggleTheme}>
+                    {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                    {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                  </MenuItem>
+                </MenuSection>
+                
+                <MenuSection>
+                  <MenuItem onClick={() => navigate('/help')}>
+                    <HelpCircle size={16} />
+                    Help & Support
+                  </MenuItem>
+                  <MenuItem onClick={handleLogout}>
+                    <LogOut size={16} />
+                    Sign Out
+                  </MenuItem>
+                </MenuSection>
+              </UserMenuDropdown>
+            </UserMenu>
           </NavActions>
         </NavContainer>
       </Nav>
 
+      {/* Mobile Menu */}
       <MobileMenu $open={mobileMenuOpen}>
         <MobileMenuContent>
           {navItems.map((item) => {
@@ -465,7 +455,7 @@ export const Navigation = () => {
                   <Icon size={20} />
                   {item.label}
                 </div>
-                <ChevronRight size={20} />
+                <ChevronRight size={16} />
               </MobileNavLink>
             );
           })}
@@ -474,3 +464,5 @@ export const Navigation = () => {
     </>
   );
 };
+
+export default Navigation;

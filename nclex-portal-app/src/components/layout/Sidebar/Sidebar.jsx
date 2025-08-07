@@ -21,7 +21,8 @@ const SidebarContainer = styled.aside`
   transform: translateX(${({ $open }) => $open ? '0' : '-100%'});
   transition: all ${({ theme }) => theme.transitions.base};
   z-index: ${({ theme }) => theme.zIndex.fixed};
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     transform: translateX(0);
@@ -49,6 +50,7 @@ const SidebarHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0; /* Prevent shrinking */
 `;
 
 const ToggleButton = styled.button`
@@ -79,7 +81,26 @@ const ToggleButton = styled.button`
 const SidebarContent = styled.div`
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: ${({ theme }) => theme.spacing.md};
+  
+  /* Custom scrollbar styles */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: ${({ theme }) => theme.colors.gray[300]};
+    border-radius: 3px;
+    
+    &:hover {
+      background: ${({ theme }) => theme.colors.gray[400]};
+    }
+  }
 `;
 
 const NavSection = styled.div`
@@ -165,6 +186,8 @@ const NavBadge = styled.span`
 const SidebarFooter = styled.div`
   padding: ${({ theme }) => theme.spacing.lg};
   border-top: 1px solid ${({ theme }) => theme.colors.border.light};
+  flex-shrink: 0; /* Prevent shrinking */
+  margin-top: auto; /* Push to bottom */
 `;
 
 const UserCard = styled.div`
@@ -181,11 +204,19 @@ const UserCard = styled.div`
   `}
 `;
 
-const UserAvatar = styled.img`
+const UserAvatar = styled.div`
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  object-fit: cover;
+  background: linear-gradient(135deg, 
+    ${({ theme }) => theme.colors.primary[400]} 0%, 
+    ${({ theme }) => theme.colors.primary[600]} 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: ${({ theme }) => theme.fontWeight.semibold};
+  font-size: ${({ theme }) => theme.fontSize.sm};
   flex-shrink: 0;
 `;
 
@@ -211,7 +242,7 @@ const UserRole = styled.div`
 // Sidebar component
 export const Sidebar = ({ open, collapsed, onToggle, onClose }) => {
   const location = useLocation();
-  const { user, getDisplayName } = useAuth();
+  const { user, getDisplayName, getUserInitials, isGuest } = useAuth();
 
   // Navigation items
   const mainNavItems = [
@@ -255,7 +286,7 @@ export const Sidebar = ({ open, collapsed, onToggle, onClose }) => {
 
         <SidebarContent>
           <NavSection>
-            <SectionTitle $collapsed={collapsed}>Main</SectionTitle>
+            <SectionTitle $collapsed={collapsed}>MAIN</SectionTitle>
             {mainNavItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -263,14 +294,18 @@ export const Sidebar = ({ open, collapsed, onToggle, onClose }) => {
                   key={item.path}
                   to={item.path}
                   $active={location.pathname === item.path}
-                  title={collapsed ? item.label : ''}
+                  title={collapsed ? item.label : undefined}
                 >
                   <NavIcon>
                     <Icon size={20} />
                   </NavIcon>
-                  <NavLabel $collapsed={collapsed}>{item.label}</NavLabel>
+                  <NavLabel $collapsed={collapsed}>
+                    {item.label}
+                  </NavLabel>
                   {item.badge && (
-                    <NavBadge $collapsed={collapsed}>{item.badge}</NavBadge>
+                    <NavBadge $collapsed={collapsed}>
+                      {item.badge}
+                    </NavBadge>
                   )}
                 </NavItem>
               );
@@ -278,7 +313,7 @@ export const Sidebar = ({ open, collapsed, onToggle, onClose }) => {
           </NavSection>
 
           <NavSection>
-            <SectionTitle $collapsed={collapsed}>Learning</SectionTitle>
+            <SectionTitle $collapsed={collapsed}>LEARNING</SectionTitle>
             {learningNavItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -286,22 +321,21 @@ export const Sidebar = ({ open, collapsed, onToggle, onClose }) => {
                   key={item.path}
                   to={item.path}
                   $active={location.pathname === item.path}
-                  title={collapsed ? item.label : ''}
+                  title={collapsed ? item.label : undefined}
                 >
                   <NavIcon>
                     <Icon size={20} />
                   </NavIcon>
-                  <NavLabel $collapsed={collapsed}>{item.label}</NavLabel>
-                  {item.badge && (
-                    <NavBadge $collapsed={collapsed}>{item.badge}</NavBadge>
-                  )}
+                  <NavLabel $collapsed={collapsed}>
+                    {item.label}
+                  </NavLabel>
                 </NavItem>
               );
             })}
           </NavSection>
 
           <NavSection>
-            <SectionTitle $collapsed={collapsed}>Support</SectionTitle>
+            <SectionTitle $collapsed={collapsed}>SUPPORT</SectionTitle>
             {supportNavItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -309,33 +343,40 @@ export const Sidebar = ({ open, collapsed, onToggle, onClose }) => {
                   key={item.path}
                   to={item.path}
                   $active={location.pathname === item.path}
-                  title={collapsed ? item.label : ''}
+                  title={collapsed ? item.label : undefined}
                 >
                   <NavIcon>
                     <Icon size={20} />
                   </NavIcon>
-                  <NavLabel $collapsed={collapsed}>{item.label}</NavLabel>
+                  <NavLabel $collapsed={collapsed}>
+                    {item.label}
+                  </NavLabel>
                 </NavItem>
               );
             })}
           </NavSection>
         </SidebarContent>
 
-        {user && (
-          <SidebarFooter>
-            <UserCard $collapsed={collapsed}>
-              <UserAvatar 
-                src={user.photoUrl || `https://ui-avatars.com/api/?name=${user.name}&background=10b981&color=fff`} 
-                alt={user.name}
-              />
+        <SidebarFooter>
+          <UserCard $collapsed={collapsed}>
+            <UserAvatar>
+              {getUserInitials?.() || 'GU'}
+            </UserAvatar>
+            {!collapsed && (
               <UserInfo $collapsed={collapsed}>
-                <UserName>{getDisplayName()}</UserName>
-                <UserRole>Student</UserRole>
+                <UserName>
+                  {isGuest ? 'Guest' : (getDisplayName?.() || 'User')}
+                </UserName>
+                <UserRole>
+                  {isGuest ? 'Guest Mode' : (user?.role || 'Student')}
+                </UserRole>
               </UserInfo>
-            </UserCard>
-          </SidebarFooter>
-        )}
+            )}
+          </UserCard>
+        </SidebarFooter>
       </SidebarContainer>
     </>
   );
 };
+
+export default Sidebar;

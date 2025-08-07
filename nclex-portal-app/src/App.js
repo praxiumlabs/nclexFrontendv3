@@ -1,4 +1,4 @@
-// src/App.js
+// src/App.js - Fixed with correct import paths
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
